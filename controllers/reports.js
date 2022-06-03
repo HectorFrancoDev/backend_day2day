@@ -120,9 +120,14 @@ const getAllReportsDashboard = async (req = request, res = response) => {
                 ],
 
                 populate: {
-                    path: 'company category',
-                    populate: { path: 'company' }
+                    path: 'company', select: ['name', 'code'],
+                    populate: { path: 'country', select: ['name', 'code', 'img'] }
                 }
+
+                // populate: {
+                //     path: 'company category',
+                //     populate: { path: 'company' }
+                // }
 
             })
 
