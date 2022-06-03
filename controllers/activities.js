@@ -340,4 +340,3 @@ module.exports = {
     deleteActivityById,
     editActivitiesCategories
 };
-
