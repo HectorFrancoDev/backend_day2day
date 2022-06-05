@@ -109,42 +109,38 @@ const getAllReportsDashboard = async (req = request, res = response) => {
         ]
     };
 
+    const [total, reports] = await Promise.all([
+        // Report.countDocuments(query),
+        Report.find(query)
 
+            .populate({
+                path: 'activity', select: ['activity', 'name', 'company', 'open_state',
+                    'initial_date', 'end_date', 'is_general', 'estimated_hours', 'worked_hours'],
+                populate: {
+                    path: 'company', select: ['code', 'name', 'country'],
+                    populate: { path: 'country', select: ['name', 'code', 'img'] }
+                }
+            })
 
-    // const [total, reports] = await Promise.all([
-    //     Report.countDocuments(query),
-    //     Report.find(query)
-
-    //         .populate({
-    //             path: 'activity', select: ['activity', 'name', 'company', 'open_state',
-    //                 'initial_date', 'end_date', 'is_general', 'estimated_hours', 'worked_hours'],
-    //             populate: {
-    //                 path: 'company', select: ['code', 'name', 'country'],
-    //                 populate: { path: 'country', select: ['name', 'code', 'img'] }
-    //             }
-    //         })
-
-    //         .populate({
-    //             path: 'user', select: ['area'],
-    //             populate: {
-    //                 path: 'area', select: ['code', 'name', 'country'],
-    //                 populate: { path: 'country', select: ['name', 'code', 'img'] }
-    //             }
-    //         })
-    //         .populate({
-    //             path: 'user', select: ['name', 'email', 'role'],
-    //             populate: {
-    //                 path: 'role', select: ['code', 'name']
-    //             }
-    //         })
-    // ]);
+            .populate({
+                path: 'user', select: ['area'],
+                populate: {
+                    path: 'area', select: ['code', 'name', 'country'],
+                    populate: { path: 'country', select: ['name', 'code', 'img'] }
+                }
+            })
+            .populate({
+                path: 'user', select: ['name', 'email', 'role'],
+                populate: {
+                    path: 'role', select: ['code', 'name']
+                }
+            })
+    ]);
 
 
     res.json({
         // total,
-        // reports
-
-        msg: 'RESPONDE CON ALGO'
+        reports
     });
 
 }
