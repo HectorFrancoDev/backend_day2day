@@ -109,8 +109,8 @@ const getAllReportsDashboard = async (req = request, res = response) => {
         ]
     };
 
-    const [reports] = await Promise.all([
-        // Report.countDocuments(query),
+    const [total, reports] = await Promise.all([
+        Report.countDocuments(query),
         Report.find(query)
 
             .populate({
@@ -138,8 +138,10 @@ const getAllReportsDashboard = async (req = request, res = response) => {
     ]);
 
 
+    console.log(total);
+
     res.json({
-        // total,
+        total,
         reports
     });
 
