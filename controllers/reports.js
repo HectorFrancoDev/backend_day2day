@@ -109,7 +109,7 @@ const getAllReportsDashboard = async (req = request, res = response) => {
         ]
     };
 
-    const [total, reports] = await Promise.all([
+    const [reports] = await Promise.all([
         // Report.countDocuments(query),
         Report.find(query)
 
