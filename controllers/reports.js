@@ -115,7 +115,7 @@ const getAllReportsDashboard = async (req = request, res = response) => {
             .populate({
                 path: 'activity',
                 select: [
-                    'activity', 'name', 'company', 'category', 'open_state',
+                    'activity', 'name', 'company', 'open_state',
                     'initial_date', 'end_date', 'is_general', 'estimated_hours', 'worked_hours'
                 ],
 
