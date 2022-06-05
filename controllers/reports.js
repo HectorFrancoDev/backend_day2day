@@ -138,8 +138,6 @@ const getAllReportsDashboard = async (req = request, res = response) => {
     ]);
 
 
-    console.log(total);
-
     res.json({
         total,
         reports
