@@ -4,6 +4,9 @@ const Activity = require('../models/activity');
 const Report = require('../models/report');
 const User = require('../models/user');
 
+// import * as moment from 'moment';
+const moment = require('moment');
+
 // import moment from 'moment';
 
 /**
@@ -145,6 +148,40 @@ const getAllReportsDashboard = async (req = request, res = response) => {
 
 }
 
+
+const createAusentimos = async (req = request, res = response) => {
+
+
+    try {
+
+        const { activity, user, start, end, detail } = req.body;
+
+        const activityAusentismo = await Activity.findById(activity);
+
+        const userAusentismo = await User.findById(user);
+
+        const arrayDates = getDates(new Date(start), new Date(end));
+
+        for (let i = 0; i < arrayDates.length; i++) {
+
+            const report = new Report({
+                date: arrayDates[i],
+                activity: activityAusentismo,
+                user: userAusentismo,
+                hours: 8,
+                detail
+            });
+
+            await report.save();
+        }
+
+        res.status(200).json({ msg: 'Ausentismo creado' });
+
+    } catch (error) {
+
+        throw new Error(error);
+    }
+}
 
 /**
  * Actualiza un reporte especifico de la base de datos.
@@ -325,6 +362,25 @@ const getAllActivitiesFromUser = async (req, res = response) => {
     res.json(activities);
 };
 
+
+
+function getDates(startDate = new Date(), stopDate = new Date()) {
+    
+    var dateArray = new Array();
+    var currentDate = startDate;
+
+    while (currentDate <= stopDate) {
+
+        if (new Date(currentDate).getDay() % 6 !== 0)
+            dateArray.push(new Date(currentDate));
+
+        currentDate = moment(currentDate).add(1, 'days');
+    }
+
+    return dateArray;
+}
+
+
 module.exports = {
     createReport,
     getAllReports,
@@ -332,6 +388,7 @@ module.exports = {
     deleteReportById,
     deleteMassiveReports,
     getAllActivitiesFromUser,
+    createAusentimos,
 
     // deleteAllHiddenReportsByUser
     // clearDeletedReports
