@@ -25,7 +25,8 @@ class Server {
             companies:  '/api/companies',
             roles:      '/api/roles',
             areas:      '/api/areas',
-            calendars:  '/api/calendars'
+            calendars:  '/api/calendars',
+            celulas:    '/api/celulas',
         };
 
         // Conectar a base de datos
@@ -68,6 +69,7 @@ class Server {
         this.app.use(this.paths.roles,      require('../routes/roles.routing'));
         this.app.use(this.paths.areas,      require('../routes/areas.routing'));
         this.app.use(this.paths.calendars,  require('../routes/calendars.routing'));
+        this.app.use(this.paths.celulas,    require('../routes/celulas.routing'));
     }
 
     listen() {

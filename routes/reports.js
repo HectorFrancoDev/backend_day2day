@@ -1,6 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
-const { createReport, getAllActivitiesFromUser, getAllReports, updateReportById, deleteReportById, deleteMassiveReports, clearDeletedReports, getAllReportsDashboard, createAusentimos } = require('../controllers/reports');
+const { createReport, getAllActivitiesFromUser, getAllReports, updateReportById, deleteReportById, deleteMassiveReports,
+    clearDeletedReports, getAllReportsDashboard, createAusentimos, createReportCelula, deleteReportCelulaById, updateReportCelulaById } = require('../controllers/reports');
 const { existReportById } = require('../helpers/db-validators');
 const { validateJWT, validateFields } = require('../middlewares');
 
@@ -18,6 +19,16 @@ router.post('/', [
     check('hours', 'Las horas son obligatorias').not().isEmpty().isFloat({ min: 0.1, max: 24 }),
     validateFields
 ], createReport);
+
+
+router.post('/celulas', [
+    validateJWT,
+    check('date', 'La fecha es obligatoria').not().isEmpty(),
+    check('activity', 'La actividad es obligatoria').not().isEmpty(),
+    check('detail', 'El detalle es obligatorio').not().isEmpty(),
+    check('hours', 'Las horas son obligatorias').not().isEmpty().isFloat({ min: 0.1, max: 24 }),
+    validateFields
+], createReportCelula);
 
 
 /**
@@ -49,6 +60,20 @@ router.put('/:id', [
 ], updateReportById);
 
 /**
+ * Actualizar registro del time report del usuario logueado.
+ * {{ url }}/api/reports/:id
+ */
+router.put('/celulas/:id', [
+    validateJWT,
+    check('date', 'La fecha es obligatoria').not().isEmpty(),
+    check('activity', 'La actividad es obligatoria').not().isEmpty(),
+    check('detail', 'El detalle es obligatorio').not().isEmpty(),
+    check('hours', 'Las horas son obligatorias').not().isEmpty().isFloat({ min: 0.1, max: 24 }),
+    check('id').custom(existReportById),
+    validateFields
+], updateReportCelulaById);
+
+/**
  * Eliminar un registro del time report en la BD.
  * {{ url }}/api/reports/:id
  */
@@ -59,6 +84,18 @@ router.delete('/:id', [
     check('id').custom(existReportById),
     validateFields,
 ], deleteReportById);
+
+/**
+ * Eliminar un registro del time report en la BD.
+ * {{ url }}/api/reports/:id
+ */
+router.delete('/celulas/:id', [
+    validateJWT,
+    // isAdminRole,
+    check('id', 'No es un id de Mongo válido').isMongoId(),
+    check('id').custom(existReportById),
+    validateFields,
+], deleteReportCelulaById);
 
 
 router.post('/ausentismos', [

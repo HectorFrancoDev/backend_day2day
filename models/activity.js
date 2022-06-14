@@ -13,6 +13,11 @@ const ActivitySchema = Schema({
         ref: 'Category',
         required: [false, 'Solo para actividades generales']
     },
+    celula: {
+        type: Schema.Types.ObjectId,
+        ref: 'Celula',
+        required: [false, 'Solo para actividades que pertenecen a una célula']
+    },
     name: {
         type: String,
         trim: true,

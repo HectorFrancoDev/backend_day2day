@@ -19,14 +19,17 @@ const createReport = async (req, res = response) => {
 
     // Generar la data a guardar
     const { ...data } = req.body;
+
     data.hours = Number(data.hours);
     data.user = req.user._id + '';
 
+    // Crear reporte de la actividad
     const report = new Report(data);
 
-    // Actualizar el número de horas trabajadas por el usuario en la actividad
+    // Buscar actividad como tal en la BD
     const activity = await Activity.findById(data.activity);
 
+    // Actualizar el número de horas trabajadas por el usuario en la actividad
     if (!activity.is_general) {
         const indexUser = activity.users.findIndex(u => u.user == data.user);
         if (indexUser !== -1) {
@@ -41,6 +44,59 @@ const createReport = async (req, res = response) => {
 
     res.status(201).json(report);
 };
+
+/**
+ * Crea un nuevo registro en el time report del usuario si posee célula alguna.
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
+
+const createReportCelula = async (req = request, res = response) => {
+
+    // Generar la data a guardar
+    const { ...data } = req.body;
+
+    data.hours = Number(data.hours);
+    data.user = req.user._id + '';
+
+    // Crear reporte de la actividad
+    const report = new Report(data);
+
+    // Buscar actividad como tal en la BD
+    const activity = await Activity.findById(data.activity);
+
+    // Ver si la actividad es una célula o no
+    if (activity.celula !== null || activity.celula !== undefined) {
+
+        const actividades = (await Activity.find({ celula: activity.celula })).filter((a) => a.name !== activity.name);
+
+        for (let i = 0; i < actividades.length; i++) {
+            const indexUser = actividades[i].users.findIndex((u) => u.user.toString() === data.user.toString());
+            if (indexUser !== -1) {
+                actividades[i].users[indexUser].worked_hours += (data.hours / actividades.length);
+                actividades[i].worked_hours += (data.hours / actividades.length);
+                await actividades[i].save();
+            }
+        }
+    }
+
+    // Actualizar el número de horas trabajadas por el usuario en la actividad
+    if (!activity.is_general) {
+        const indexUser = activity.users.findIndex(u => u.user == data.user);
+        if (indexUser !== -1) {
+            activity.users[indexUser].worked_hours += data.hours;
+            activity.worked_hours += data.hours;
+        }
+    }
+
+    // Guardar DB
+    await report.save();
+    await activity.save();
+
+    res.status(201).json(report);
+
+}
 
 /**
  * Obtiene todos los registros del time report del usuario logueado
@@ -97,6 +153,11 @@ const getAllReports = async (req, res = response) => {
     });
 };
 
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
 const getAllReportsDashboard = async (req = request, res = response) => {
 
     let {
@@ -148,7 +209,11 @@ const getAllReportsDashboard = async (req = request, res = response) => {
 
 }
 
-
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
 const createAusentimos = async (req = request, res = response) => {
 
 
@@ -200,7 +265,7 @@ const updateReportById = async (req, res = response) => {
 
     const activity = await Activity.findById(data.activity);
 
-    if (!activity.is_genearl) {
+    if (!activity.is_general) {
         // Actualizar el número de horas trabajadas por el usuario en la actividad
         const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
 
@@ -216,6 +281,65 @@ const updateReportById = async (req, res = response) => {
         }
     }
 
+    res.json(report);
+};
+
+
+/**
+ * Actualiza un reporte especifico de la base de datos.
+ * @param {*} req 
+ * @param {*} res 
+ * @returns 
+ */
+ const updateReportCelulaById = async (req, res = response) => {
+
+    const { id } = req.params;
+    const { state, user, ...data } = req.body;
+
+    const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
+
+    const report = await Report.findOneAndUpdate(query, data, { new: true });
+
+    const activity = await Activity.findById(data.activity);
+
+    if (!activity.is_general) {
+        // Actualizar el número de horas trabajadas por el usuario en la actividad
+        const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
+
+        if (indexUser !== -1) {
+
+            activity.users[indexUser].worked_hours -= data.current_hours;
+            activity.worked_hours -= data.current_hours;
+
+            activity.users[indexUser].worked_hours += data.hours;
+            activity.worked_hours += data.hours;
+
+            await Activity.findByIdAndUpdate(data.activity, activity);
+        }
+    }
+
+    // Ver si la actividad es una célula o no
+    if (activity.celula !== null || activity.celula !== undefined) {
+
+        const actividades = (await Activity.find({ celula: activity.celula })).filter((a) => a.name !== activity.name);
+
+        for (let i = 0; i < actividades.length; i++) {
+           
+            const indexUser = actividades[i].users.findIndex((u) => u.user.toString() === req.user._id.toString());
+           
+            if (indexUser !== -1) {
+                
+                actividades[i].users[indexUser].worked_hours -= (data.current_hours / actividades.length);
+                actividades[i].worked_hours -= (data.current_hours / actividades.length);
+
+                actividades[i].users[indexUser].worked_hours += (data.hours / actividades.length);
+                actividades[i].worked_hours += (data.hours / actividades.length);
+
+                await actividades[i].save();
+            }
+
+        }
+    }
 
     res.json(report);
 };
@@ -231,26 +355,73 @@ const deleteReportById = async (req, res = response) => {
     const { id } = req.params;
 
     const query = {
-        $and:
-            [
-                { '_id': id },
-                { 'user': req.user._id }
-            ]
+        $and: [{ '_id': id }, { 'user': req.user._id }]
     };
 
     const reportDeleted = await Report.findOneAndUpdate(query, { state: false }, { new: true });
 
     const queryActivity = { '_id': reportDeleted.activity._id };
-    const activity = await Activity.findOne(queryActivity);
+    const activity = await Activity.findById(queryActivity);
+
 
     if (!activity.is_general) {
 
         // Update worked hours
-        const indexUser = activity.users.findIndex(u => u.user._id.toString() == req.user._id.toString());
+        const indexUser = activity.users.findIndex((u) => u.user._id.toString() == req.user._id.toString());
         if (indexUser !== -1) {
             activity.users[indexUser].worked_hours -= reportDeleted.hours;
             activity.worked_hours -= reportDeleted.hours;
             await Activity.findByIdAndUpdate(queryActivity, activity, { new: true });
+        }
+    }
+
+    res.json(reportDeleted);
+};
+
+
+/**
+ * Elimina un registro especifico del time report en base de datos (Soft delete).
+ * @param {*} req 
+ * @param {*} res
+ * @returns 
+ */
+const deleteReportCelulaById = async (req, res = response) => {
+
+    const { id } = req.params;
+
+    const query = {
+        $and: [{ '_id': id }, { 'user': req.user._id }]
+    };
+
+    const reportDeleted = await Report.findOneAndUpdate(query, { state: false }, { new: true });
+
+    const queryActivity = { '_id': reportDeleted.activity._id };
+    const activity = await Activity.findById(queryActivity);
+
+
+    if (!activity.is_general) {
+
+        // Update worked hours
+        const indexUser = activity.users.findIndex((u) => u.user._id.toString() == req.user._id.toString());
+        if (indexUser !== -1) {
+            activity.users[indexUser].worked_hours -= reportDeleted.hours;
+            activity.worked_hours -= reportDeleted.hours;
+            await Activity.findByIdAndUpdate(queryActivity, activity, { new: true });
+        }
+    }
+
+    // Ver si la actividad es una célula o no
+    if (activity.celula !== null || activity.celula !== undefined) {
+
+        const actividades = (await Activity.find({ celula: activity.celula })).filter((a) => a.name !== activity.name);
+
+        for (let i = 0; i < actividades.length; i++) {
+            const indexUser = actividades[i].users.findIndex((u) => u.user.toString() === req.user._id.toString());
+            if (indexUser !== -1) {
+                actividades[i].users[indexUser].worked_hours -= (reportDeleted.hours / actividades.length);
+                actividades[i].worked_hours -= (reportDeleted.hours / actividades.length);
+                await actividades[i].save();
+            }
         }
     }
 
@@ -365,7 +536,7 @@ const getAllActivitiesFromUser = async (req, res = response) => {
 
 
 function getDates(startDate = new Date(), stopDate = new Date()) {
-    
+
     var dateArray = new Array();
     var currentDate = startDate;
 
@@ -383,9 +554,12 @@ function getDates(startDate = new Date(), stopDate = new Date()) {
 
 module.exports = {
     createReport,
+    createReportCelula,
     getAllReports,
     updateReportById,
+    updateReportCelulaById,
     deleteReportById,
+    deleteReportCelulaById,
     deleteMassiveReports,
     getAllActivitiesFromUser,
     createAusentimos,
