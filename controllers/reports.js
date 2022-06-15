@@ -564,8 +564,5 @@ module.exports = {
     getAllActivitiesFromUser,
     createAusentimos,
 
-    // deleteAllHiddenReportsByUser
-    // clearDeletedReports
-
     getAllReportsDashboard
 };
