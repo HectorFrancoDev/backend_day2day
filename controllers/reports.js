@@ -563,6 +563,5 @@ module.exports = {
     deleteMassiveReports,
     getAllActivitiesFromUser,
     createAusentimos,
-
     getAllReportsDashboard
 };
