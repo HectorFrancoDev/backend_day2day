@@ -17,6 +17,8 @@ const moment = require('moment');
  */
 const createReport = async (req, res = response) => {
 
+    console.log('Entraron reports.js:20');
+
     // Generar la data a guardar
     const { ...data } = req.body;
 
@@ -63,6 +65,8 @@ const createReport = async (req, res = response) => {
  */
 
 const createReportCelula = async (req = request, res = response) => {
+
+    console.log('Entraron reports.js:69');
 
     // Generar la data a guardar
     const { ...data } = req.body;
@@ -244,6 +248,8 @@ const createAusentimos = async (req = request, res = response) => {
 
     try {
 
+        console.log('Entraron reports.js:251');
+
         const { activity, user, start, end, detail } = req.body;
 
 
@@ -292,7 +298,7 @@ const createAusentimos = async (req = request, res = response) => {
  */
 const updateReportById = async (req, res = response) => {
 
-    console.log('Entraron reports.js:295');
+    console.log('Entraron reports.js:301');
 
     const { id } = req.params;
     const { state, user, ...data } = req.body;
@@ -343,7 +349,7 @@ const updateReportById = async (req, res = response) => {
 const updateReportCelulaById = async (req, res = response) => {
 
 
-    console.log('Entraron reports.js:346');
+    console.log('Entraron reports.js:352');
 
     const { id } = req.params;
     const { state, user, ...data } = req.body;
@@ -459,6 +465,8 @@ const deleteReportById = async (req, res = response) => {
  * @returns 
  */
 const deleteReportCelulaById = async (req, res = response) => {
+
+    console.log('Entraron reports.js:469');
 
     const { id } = req.params;
 
@@ -611,6 +619,9 @@ const clearDeletedReports = async (req = request, res = response) => {
  * @returns 
  */
 const getAllActivitiesFromUser = async (req, res = response) => {
+
+    console.log('Entraron reports.js:623');
+
     const activities = req.user.activities;
 
     res.json(activities);

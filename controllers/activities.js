@@ -113,6 +113,11 @@ const getActivityById = async (req = request, res = response) => {
     if (!id)
         return res.status(400).json({ error: 'Debe enviar una actividad' });
 
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log('ESTALLÓ AQUÍ activities.js:117')
+        return res.status(400).json({ error: 'Debe enviar un id de mongo válido' });
+    }
+
     const [total, activity] = await Promise.all([
         Activity.countDocuments(id),
         Activity.findById(id)
