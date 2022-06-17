@@ -79,6 +79,9 @@ const createActivitiesScript = async (req, res = response) => {
 
 const getActivities = async (req = request, res = response) => {
 
+
+    console.log('Entraron activities.js:83');
+
     const { specific = false } = req.query;
 
     const query = (specific == true || specific == 'true') ? { is_general: false } : {};
@@ -103,6 +106,8 @@ const getActivities = async (req = request, res = response) => {
 };
 
 const getActivityById = async (req = request, res = response) => {
+
+    console.log('Entraron activities.js:110');
 
     const { id } = req.params;
     if (!id)

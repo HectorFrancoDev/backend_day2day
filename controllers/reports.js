@@ -126,6 +126,9 @@ const createReportCelula = async (req = request, res = response) => {
  */
 const getAllReports = async (req, res = response) => {
 
+
+    console.log('Entraron reports.js:130');
+
     const { _id } = req.user;
 
     if (!_id)
@@ -179,6 +182,8 @@ const getAllReports = async (req, res = response) => {
  * @param {*} res 
  */
 const getAllReportsDashboard = async (req = request, res = response) => {
+
+    console.log('Entraron reports.js:186');
 
     let {
         start = new Date('2020-11-09'),
@@ -287,6 +292,8 @@ const createAusentimos = async (req = request, res = response) => {
  */
 const updateReportById = async (req, res = response) => {
 
+    console.log('Entraron reports.js:295');
+
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
@@ -334,6 +341,9 @@ const updateReportById = async (req, res = response) => {
  * @returns 
  */
 const updateReportCelulaById = async (req, res = response) => {
+
+
+    console.log('Entraron reports.js:346');
 
     const { id } = req.params;
     const { state, user, ...data } = req.body;
