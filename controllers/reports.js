@@ -23,6 +23,16 @@ const createReport = async (req, res = response) => {
     data.hours = Number(data.hours);
     data.user = req.user._id + '';
 
+    if (data.activity === null || typeof (data.activity) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
+
     // Crear reporte de la actividad
     const report = new Report(data);
 
@@ -59,6 +69,16 @@ const createReportCelula = async (req = request, res = response) => {
 
     data.hours = Number(data.hours);
     data.user = req.user._id + '';
+
+    if (data.activity === null || typeof (data.activity) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
 
     // Crear reporte de la actividad
     const report = new Report(data);
@@ -221,6 +241,17 @@ const createAusentimos = async (req = request, res = response) => {
 
         const { activity, user, start, end, detail } = req.body;
 
+
+        if (activity === null || typeof (activity) !== 'string') {
+            console.log({ error: 'No hay ID o no es un String' });
+            return res.status(400).json({ error: 'No es posible cargar la actividad' });
+        }
+
+        if (!activity.match(/^[0-9a-fA-F]{24}$/)) {
+            console.log({ error: 'No es un ID válido de Mongo' });
+            return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+        }
+
         const activityAusentismo = await Activity.findById(activity);
 
         const userAusentismo = await User.findById(user);
@@ -259,6 +290,17 @@ const updateReportById = async (req, res = response) => {
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
+    
+    if (data.activity === null || typeof (data.activity) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
+
     const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
 
     const report = await Report.findOneAndUpdate(query, data, { new: true });
@@ -291,10 +333,21 @@ const updateReportById = async (req, res = response) => {
  * @param {*} res 
  * @returns 
  */
- const updateReportCelulaById = async (req, res = response) => {
+const updateReportCelulaById = async (req, res = response) => {
 
     const { id } = req.params;
     const { state, user, ...data } = req.body;
+
+    
+    if (data.activity === null || typeof (data.activity) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
 
     const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
 
@@ -324,11 +377,11 @@ const updateReportById = async (req, res = response) => {
         const actividades = (await Activity.find({ celula: activity.celula })).filter((a) => a.name !== activity.name);
 
         for (let i = 0; i < actividades.length; i++) {
-           
+
             const indexUser = actividades[i].users.findIndex((u) => u.user.toString() === req.user._id.toString());
-           
+
             if (indexUser !== -1) {
-                
+
                 actividades[i].users[indexUser].worked_hours -= (data.current_hours / actividades.length);
                 actividades[i].worked_hours -= (data.current_hours / actividades.length);
 
@@ -353,6 +406,16 @@ const updateReportById = async (req, res = response) => {
 const deleteReportById = async (req, res = response) => {
 
     const { id } = req.params;
+
+    if (id === null || typeof (id) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
 
     const query = {
         $and: [{ '_id': id }, { 'user': req.user._id }]
@@ -388,6 +451,16 @@ const deleteReportById = async (req, res = response) => {
 const deleteReportCelulaById = async (req, res = response) => {
 
     const { id } = req.params;
+
+    if (id === null || typeof (id) !== 'string') {
+        console.log({ error: 'No hay ID o no es un String' });
+        return res.status(400).json({ error: 'No es posible cargar la actividad' });
+    }
+
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log({ error: 'No es un ID válido de Mongo' });
+        return res.status(400).json({ error: 'No es un ID válido de Mongo' });
+    }
 
     const query = {
         $and: [{ '_id': id }, { 'user': req.user._id }]
