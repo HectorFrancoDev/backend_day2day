@@ -226,11 +226,34 @@ const getSpecificActivities = async (req, res = response) => {
 
     const activities = await Activity.find(
         {
-            $or: [{ users: { $elemMatch: { user: user_id, is_active: true } } }, { is_general: true, state: true }]
+            $or: [
+                { users: { $elemMatch: { user: user_id, is_active: true } } },
+                { is_general: true, state: true }
+            ]
         })
         .populate({
             path: 'company', select: ['name', 'code'],
             populate: { path: 'country', select: ['name', 'code', 'img'] }
+        })
+        .populate({
+            path: 'category', select: ['name', 'code']
+        })
+
+    res.json({ activities });
+};
+
+const getActividadesAusentismo = async (req, res = response) => {
+
+    const user_id = req.user._id;
+
+    console.log('249', user_id);
+
+    if (!user_id)
+        res.status(400).json({ error: 'No se encuentra el auditor ' })
+
+    const activities = await Activity.find(
+        {
+            is_general: true, state: true
         })
         .populate({
             path: 'category', select: ['name', 'code']
@@ -348,5 +371,6 @@ module.exports = {
     getSpecificActivities,
     editActivities,
     deleteActivityById,
-    editActivitiesCategories
+    editActivitiesCategories,
+    getActividadesAusentismo
 };

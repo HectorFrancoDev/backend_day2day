@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createActivity, getActivities, assignActivity,
-    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories } = require('../controllers/activities');
+    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo } = require('../controllers/activities');
 
 const {
     validateFields, validateJWT
@@ -60,6 +60,18 @@ router.post('/specific', [
     // check('is_general', 'General o no es obligatorio').not().isEmpty(),
     // validateFields
 ], getSpecificActivities);
+
+
+router.post('/ausentismos', [
+    validateJWT,
+    // isAdminRole,
+    // check('name', 'El nombre es obligatorio').not().isEmpty(),
+    // check('initial_date', 'La fecha inicial es obligatoria').not().isEmpty(),
+    // check('end_date', 'La fecha final es obligatoria').not().isEmpty(),
+    // check('estimated_hours', 'El estimado de horas es obligatorio').not().isEmpty(),
+    // check('is_general', 'General o no es obligatorio').not().isEmpty(),
+    // validateFields
+], getActividadesAusentismo);
 
 
 router.post('/script', createActivitiesScript);
