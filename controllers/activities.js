@@ -246,8 +246,6 @@ const getActividadesAusentismo = async (req, res = response) => {
 
     const user_id = req.user._id;
 
-    console.log('249', user_id);
-
     if (!user_id)
         res.status(400).json({ error: 'No se encuentra el auditor ' })
 
