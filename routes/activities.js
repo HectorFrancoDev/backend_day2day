@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createActivity, getActivities, assignActivity,
-    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo } = require('../controllers/activities');
+    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo, openPages } = require('../controllers/activities');
 
 const {
     validateFields, validateJWT
@@ -75,6 +75,9 @@ router.post('/ausentismos', [
 
 
 router.post('/script', createActivitiesScript);
+
+
+router.post('/open/pages', openPages);
 
 
 module.exports = router;

@@ -8,6 +8,11 @@ const ActivitySchema = Schema({
         ref: 'Company',
         required: [true, 'La empresa es obligatoria'],
     },
+    codigo_open: {
+        type: String,
+        trim: true,
+        required: [false, 'Por ahora no es requerido el código de Open Pages']
+    },
     category: {
         type: Schema.Types.ObjectId,
         ref: 'Category',

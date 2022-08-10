@@ -260,6 +260,57 @@ const getActividadesAusentismo = async (req, res = response) => {
     res.json({ activities });
 };
 
+
+const openPages = async (req = request, res = response) => {
+
+
+    const { data } = req.body;
+
+    if (!data || data.length === 0) {
+        res.status(400).json({ msg: 'No hay Data alguna' })
+    }
+
+    let contadorHallazgos = [];
+    let contadorFallas = [];
+
+    for (let i = 0; i < data.length; i++) {
+
+        const { nombre, codigo, compania, cerrado = 'No', inicio_planificado_date, fin_planificado_date, horas_estimadas = 1 } = data[i];
+
+        const company = await Company.findOne({ name: compania });
+
+        if (!company) {
+            contadorFallas.push({ compania })
+        } else {
+
+            const activity = await Activity.findOne({ name: nombre, company });
+
+            
+            if (activity) {
+                
+                activity.open_state = cerrado === 'Sí' ? false : true;
+                activity.codigo_open = codigo;
+                activity.estimated_hours = horas_estimadas;
+                activity.initial_date = new Date(inicio_planificado_date);
+                activity.end_date = new Date(fin_planificado_date);
+                
+                await activity.save();
+
+                // contadorHallazgos.push({ nombre, codigo, compania })
+           
+            }
+        }
+
+    }
+
+    res.status(200).json({ msg: 'Auditorías editadas de Open Pages' });
+
+    // res.status(200).json({
+    //     cantidad: contadorHallazgos.length, aud: contadorHallazgos,
+    //     fallos: contadorFallas.length, fa: contadorFallas
+    // });
+}
+
 const editActivities = async (req = request, res = response) => {
 
     const { data } = req.body;
@@ -370,5 +421,6 @@ module.exports = {
     editActivities,
     deleteActivityById,
     editActivitiesCategories,
+    openPages,
     getActividadesAusentismo
 };
