@@ -56,7 +56,7 @@ class Server {
             ],
         }
         this.app.use(cors({
-            origin: ['*', 'http://localhost:4200', 'https://day2day.ml', 'https://hosting-day-2-day.web.app']
+            origin: ['*', 'null', 'http://localhost:4200', 'https://day2day.ml', 'https://hosting-day-2-day.web.app']
         }));
         // this.app.use(cors(corsOptions));
 
