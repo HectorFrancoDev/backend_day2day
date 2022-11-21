@@ -40,7 +40,7 @@ router.get('/', [
 ], getAllReports);
 
 router.get('/dashboard', [
-    // validateJWT
+    validateJWT
 ], getAllReportsDashboard);
 
 /**
