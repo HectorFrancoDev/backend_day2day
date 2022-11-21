@@ -3,6 +3,11 @@ const { populate } = require('../models/activity');
 const Activity = require('../models/activity');
 const Report = require('../models/report');
 const User = require('../models/user');
+const Role = require('../models/role.model');
+const Country = require('../models/country.model');
+const Area = require('../models/area.model');
+
+const fc = require('festivos-colombia');
 
 // import * as moment from 'moment';
 const moment = require('moment');
@@ -291,7 +296,7 @@ const createAusentimos = async (req = request, res = response) => {
 }
 
 /**
- * Actualiza un reporte especifico de la base de datos.
+ * Actualiza un reporte especifico de la base de datos. - TODO: revisar luego
  * @param {*} req 
  * @param {*} res 
  * @returns 
@@ -303,7 +308,7 @@ const updateReportById = async (req, res = response) => {
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
-    
+
     if (data.activity === null || typeof (data.activity) !== 'string') {
         console.log({ error: 'No hay ID o no es un String' });
         return res.status(400).json({ error: 'No es posible cargar la actividad' });
@@ -354,7 +359,7 @@ const updateReportCelulaById = async (req, res = response) => {
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
-    
+
     if (data.activity === null || typeof (data.activity) !== 'string') {
         console.log({ error: 'No hay ID o no es un String' });
         return res.status(400).json({ error: 'No es posible cargar la actividad' });
@@ -628,6 +633,110 @@ const getAllActivitiesFromUser = async (req, res = response) => {
 };
 
 
+const setHolidaysOtrosPaises = async (req = request, res = response) => {
+
+    const { year, role, area } = req.body;
+
+    if (!area || !role || !year)
+        res.status(500).json({ error: 'Hacen falta datos en la request body' });
+
+    const role_user = await Role.findOne({ code: role });
+    const area_user = await Area.findOne({ code: area });
+
+    // Actividad de día festivo
+    const dia_festivo = await Activity.findById('62e60db9a1036e0004686e02');
+
+    const [total, users] = await Promise.all([
+
+        User.countDocuments({ role: role_user, area: area_user, state: true }),
+        User.find({ role: role_user, area: area_user, state: true })
+    ]);
+
+    let holidays = ['19/09/2022', '05/12/2022']
+
+    for (let i = 0; i < users.length; i++) {
+
+        for (let j = 0; j < holidays.length; j++) {
+
+            const date_moment = moment(holidays[j], 'DD/MM/YYYY').format('MM-DD-YYYY');
+            const date = new Date(date_moment);
+
+            if (date.getDay() % 6 !== 0) {
+
+                const report = new Report({
+                    hours: 8,
+                    activity: dia_festivo,
+                    user: users[i],
+                    date: date,
+                    detail: `Día Festivo`
+                });
+
+                await report.save();
+            }
+        }
+    }
+
+    res.status(200).json({ total, msg: users });
+
+}
+
+
+const setHolidays = async (req = request, res = response) => {
+
+
+    const { year, role, area } = req.body;
+
+    if (!area || !role || !year)
+        res.status(500).json({ error: 'Hacen falta datos en la request body' });
+
+
+    const role_user = await Role.findOne({ code: role });
+    const area_user = await Area.findOne({ code: area });
+
+    // Actividad de día festivo
+    const dia_festivo = await Activity.findById('62e60db9a1036e0004686e02');
+
+    const [total, users] = await Promise.all([
+
+        User.countDocuments({ role: role_user, area: area_user, state: true }),
+        User.find({ role: role_user, area: area_user, state: true })
+    ])
+
+    let holidays = fc.getHolidaysByYear(year);
+
+
+    for (let i = 0; i < users.length; i++) {
+
+        for (let j = 0; j < holidays.length; j++) {
+
+            const date_moment = moment(holidays[j].date, 'DD/MM/YYYY').format('MM-DD-YYYY');
+            const date = new Date(date_moment);
+
+            if (date > new Date()) {
+
+                if (date.getDay() % 6 !== 0) {
+
+                    const report = new Report({
+                        hours: 8,
+                        activity: dia_festivo,
+                        user: users[i],
+                        date: date,
+                        detail: `Día Festivo - ${holidays[j].name}`
+                    });
+
+                    await report.save();
+                }
+
+            }
+        }
+
+    }
+
+    res.status(200).json({ total, msg: users });
+
+}
+
+
 
 function getDates(startDate = new Date(), stopDate = new Date()) {
 
@@ -646,6 +755,7 @@ function getDates(startDate = new Date(), stopDate = new Date()) {
 }
 
 
+
 module.exports = {
     createReport,
     createReportCelula,
@@ -657,5 +767,7 @@ module.exports = {
     deleteMassiveReports,
     getAllActivitiesFromUser,
     createAusentimos,
+    setHolidays,
+    setHolidaysOtrosPaises,
     getAllReportsDashboard
 };

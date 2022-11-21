@@ -64,6 +64,7 @@ const getUsers = async (req = request, res = response) => {
 
     res.status(200).json({ total, users });
 }
+
 const getUserById = async (req = request, res = response) => {
 
     const { id } = req.params;
