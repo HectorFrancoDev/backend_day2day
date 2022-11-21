@@ -39,8 +39,6 @@ router.get('/', [
     validateJWT
 ], getAllReports);
 
-
-
 router.get('/dashboard', [
     // validateJWT
 ], getAllReportsDashboard);
