@@ -58,7 +58,7 @@ class Server {
         this.app.use(cors());
 
         // Lectura y parseo del body
-        this.app.use(express.json({ limit: '50mb' }));
+        this.app.use(express.json({ limit: '100mb' }));
     }
 
     routes() {
