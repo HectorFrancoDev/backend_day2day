@@ -55,7 +55,7 @@ class Server {
                 'https://hosting-day-2-day.web.app'
             ],
         }
-        this.app.use(cors());
+        this.app.use(cors(corsOptions));
 
         // Lectura y parseo del body
         this.app.use(express.json({ limit: '100mb' }));
