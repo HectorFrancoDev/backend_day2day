@@ -192,7 +192,7 @@ const getAllReports = async (req, res = response) => {
  */
 const getAllReportsDashboard = async (req = request, res = response) => {
 
-    console.log('Entraron reports.js:186');
+    console.log('Entraron report.js:195');
 
     let {
         start = new Date('2020-11-09'),
