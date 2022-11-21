@@ -55,7 +55,8 @@ class Server {
                 'https://hosting-day-2-day.web.app'
             ],
         }
-        this.app.use(cors(corsOptions));
+        this.app.use(cors());
+        // this.app.use(cors(corsOptions));
 
 
         // this.app.use(function (req, res, next) {
