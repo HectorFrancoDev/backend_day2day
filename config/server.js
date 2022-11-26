@@ -70,7 +70,7 @@ class Server {
         // });
 
         // Lectura y parseo del body
-        this.app.use(express.json({ limit: '20mb' }));
+        this.app.use(express.json({ limit: '100mb' }));
     }
 
     routes() {

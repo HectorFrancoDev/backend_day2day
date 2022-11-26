@@ -185,6 +185,92 @@ const getAllReports = async (req, res = response) => {
     });
 };
 
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ */
+const getAllReportsHoursGeneralActivities = async(req = request, res = response) => {
+
+
+    let {
+        start = new Date('2022-01-01'),
+        end = new Date('2022-10-31')
+
+    } = req.query;
+
+    const query = {
+        $and: [
+            { 'state': true },
+            { 'date': { $gte: new Date(start), $lt: new Date(end) } }
+        ]
+    };
+
+    const [total, reports] = await Promise.all([
+        Report.countDocuments(query),
+        Report.find(query)
+
+            .populate({
+                path: 'activity', select: ['activity', 'name', 'category', 'open_state',
+                    'initial_date', 'end_date', 'is_general', 'estimated_hours', 'worked_hours'],
+                populate: {
+                    path: 'category', select: ['code', 'name']
+                }
+            })
+
+            // .populate({
+            //     path: 'user', select: ['area'],
+            //     populate: {
+            //         path: 'area', select: ['code', 'name', 'country'],
+            //         populate: { path: 'country', select: ['name', 'code', 'img'] }
+            //     }
+            // })
+            // .populate({
+            //     path: 'user', select: ['name', 'email', 'role'],
+            //     populate: {
+            //         path: 'role', select: ['code', 'name']
+            //     }
+            // })
+    ]);
+
+
+    const id_activity = [];
+    const name_activity = [];
+    const worked_hours = [];
+    const category = [];
+
+    const generales = reports.filter((report) => report.activity.is_general);
+
+    const agrupar = generales.forEach((report) => {
+
+        if (!id_activity.includes(report.activity._id)) {
+            id_activity.push(report.activity._id);
+            name_activity.push(report.activity.name);
+            worked_hours.push(report.hours);
+            // category.push(report.activity.category.name);
+
+        } else {
+
+            let activity_id = id_activity.indexOf(report.activity._id);
+            worked_hours[activity_id] += report.hours;
+
+        }
+
+    });
+
+    const lenght = generales.length;
+
+    res.json({
+        lenght,
+        id_activity,
+        name_activity,
+        worked_hours,
+        category
+
+    });
+}
+
 /**
  * 
  * @param {*} req 
@@ -769,5 +855,6 @@ module.exports = {
     createAusentimos,
     setHolidays,
     setHolidaysOtrosPaises,
+    getAllReportsHoursGeneralActivities,
     getAllReportsDashboard
 };
