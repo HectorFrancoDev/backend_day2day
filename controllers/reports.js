@@ -9,10 +9,8 @@ const Area = require('../models/area.model');
 
 const fc = require('festivos-colombia');
 
-// import * as moment from 'moment';
 const moment = require('moment');
 
-// import moment from 'moment';
 
 /**
  * Crea un nuevo registro en el time report del usuario.
@@ -46,13 +44,11 @@ const createReport = async (req, res = response) => {
     // Buscar actividad como tal en la BD
     const activity = await Activity.findById(data.activity);
 
-    // Actualizar el número de horas trabajadas por el usuario en la actividad
-    if (!activity.is_general) {
-        const indexUser = activity.users.findIndex(u => u.user == data.user);
-        if (indexUser !== -1) {
-            activity.users[indexUser].worked_hours += data.hours;
-            activity.worked_hours += data.hours;
-        }
+    // Actualizar el número de horas trabajadas por el usuario en la actividad / misión
+    const indexUser = activity.users.findIndex(u => u.user == data.user);
+    if (indexUser !== -1) {
+        activity.users[indexUser].worked_hours += data.hours;
+        activity.worked_hours += data.hours;
     }
 
     // Guardar DB
@@ -191,7 +187,7 @@ const getAllReports = async (req, res = response) => {
  * @param {*} req 
  * @param {*} res 
  */
-const getAllReportsHoursGeneralActivities = async(req = request, res = response) => {
+const getAllReportsHoursGeneralActivities = async (req = request, res = response) => {
 
 
     let {
@@ -219,19 +215,19 @@ const getAllReportsHoursGeneralActivities = async(req = request, res = response)
                 }
             })
 
-            // .populate({
-            //     path: 'user', select: ['area'],
-            //     populate: {
-            //         path: 'area', select: ['code', 'name', 'country'],
-            //         populate: { path: 'country', select: ['name', 'code', 'img'] }
-            //     }
-            // })
-            // .populate({
-            //     path: 'user', select: ['name', 'email', 'role'],
-            //     populate: {
-            //         path: 'role', select: ['code', 'name']
-            //     }
-            // })
+        // .populate({
+        //     path: 'user', select: ['area'],
+        //     populate: {
+        //         path: 'area', select: ['code', 'name', 'country'],
+        //         populate: { path: 'country', select: ['name', 'code', 'img'] }
+        //     }
+        // })
+        // .populate({
+        //     path: 'user', select: ['name', 'email', 'role'],
+        //     populate: {
+        //         path: 'role', select: ['code', 'name']
+        //     }
+        // })
     ]);
 
 
@@ -382,7 +378,7 @@ const createAusentimos = async (req = request, res = response) => {
 }
 
 /**
- * Actualiza un reporte especifico de la base de datos. - TODO: revisar luego
+ * Actualiza un reporte especifico de la base de datos.
  * @param {*} req 
  * @param {*} res 
  * @returns 
@@ -407,12 +403,39 @@ const updateReportById = async (req, res = response) => {
 
     const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
 
-    const report = await Report.findOneAndUpdate(query, data, { new: true });
+    const report = await Report.findOne(query);
+
+    const old_activity = await Activity.findById(report.activity);
 
     const activity = await Activity.findById(data.activity);
 
-    if (!activity.is_general) {
+    // Si la actividad a editar es diferente
+    if (old_activity._id.toString() !== activity._id.toString()) {
+
+        const indexUserOldActivity = old_activity.users.findIndex(u => u.user == user._id.toString());
+        const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
+
+        if (indexUserOldActivity !== -1) {
+
+            old_activity.users[indexUserOldActivity].worked_hours -= data.current_hours;
+            old_activity.worked_hours -= data.current_hours;
+
+            await old_activity.save();
+        }
+
+        if (indexUser !== -1) {
+
+            activity.users[indexUser].worked_hours += data.hours;
+            activity.worked_hours += data.hours;
+
+            await activity.save();
+        }
+    }
+
+    // Si es la misma actividad a la actual
+    else {
         // Actualizar el número de horas trabajadas por el usuario en la actividad
+
         const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
 
         if (indexUser !== -1) {
@@ -423,9 +446,18 @@ const updateReportById = async (req, res = response) => {
             activity.users[indexUser].worked_hours += data.hours;
             activity.worked_hours += data.hours;
 
-            await Activity.findByIdAndUpdate(data.activity, activity);
+            await activity.save();
         }
+
     }
+
+    report.activity = activity;
+    report.detail = data.detail;
+    report.hours = data.hours;
+    report.date = data.date;
+
+    await report.save();
+
 
     res.json(report);
 };
@@ -533,16 +565,12 @@ const deleteReportById = async (req, res = response) => {
     const queryActivity = { '_id': reportDeleted.activity._id };
     const activity = await Activity.findById(queryActivity);
 
-
-    if (!activity.is_general) {
-
-        // Update worked hours
-        const indexUser = activity.users.findIndex((u) => u.user._id.toString() == req.user._id.toString());
-        if (indexUser !== -1) {
-            activity.users[indexUser].worked_hours -= reportDeleted.hours;
-            activity.worked_hours -= reportDeleted.hours;
-            await Activity.findByIdAndUpdate(queryActivity, activity, { new: true });
-        }
+    // Update worked hours
+    const indexUser = activity.users.findIndex((u) => u.user._id.toString() == req.user._id.toString());
+    if (indexUser !== -1) {
+        activity.users[indexUser].worked_hours -= reportDeleted.hours;
+        activity.worked_hours -= reportDeleted.hours;
+        await Activity.findByIdAndUpdate(queryActivity, activity, { new: true });
     }
 
     res.json(reportDeleted);
@@ -611,6 +639,11 @@ const deleteReportCelulaById = async (req, res = response) => {
 };
 
 
+/**
+ * Elimina varios registros de forma masiva
+ * @param {*} req 
+ * @param {*} res 
+ */
 const deleteMassiveReports = async (req = request, res = response) => {
 
     const { data = [] } = req.body;
@@ -624,7 +657,7 @@ const deleteMassiveReports = async (req = request, res = response) => {
             $and: [{ '_id': data[i].id }, { 'user': data[i].user._id }]
         };
 
-        // Elimina el reporte como tal
+        // Elimina el reporte como tal (poner estado en false)
         const reportDeleted = await Report.findOneAndUpdate(query, { state: false }, { new: true });
 
         // Busca la actividad
@@ -632,22 +665,21 @@ const deleteMassiveReports = async (req = request, res = response) => {
         const activity = await Activity.findOne(queryActivity);
 
         // Comprueba si es una actividad especifíca y no general
-        if (!activity.is_general) {
 
-            // Update worked hours per user and activity
-            const indexUser = activity.users.findIndex(u => u.user._id.toString() == data[i].user._id.toString());
-            if (indexUser !== -1) {
+        // Update worked hours per user and activity
+        const indexUser = activity.users.findIndex(u => u.user._id.toString() == data[i].user._id.toString());
+        if (indexUser !== -1) {
 
-                // Actualiza las horas eliminadas del usuario en la actividad
-                activity.users[indexUser].worked_hours -= reportDeleted.hours;
+            // Actualiza las horas eliminadas del usuario en la actividad
+            activity.users[indexUser].worked_hours -= reportDeleted.hours;
 
-                // Actualiza las horas eliminadas de la actividad
-                activity.worked_hours -= reportDeleted.hours;
+            // Actualiza las horas eliminadas de la actividad
+            activity.worked_hours -= reportDeleted.hours;
 
-                // Actualiza la actividad como tal
-                await Activity.findOneAndUpdate(queryActivity, activity, { new: true });
-            }
+            // Actualiza la actividad como tal
+            await Activity.findOneAndUpdate(queryActivity, activity, { new: true });
         }
+
     }
 
     res.status(200).json({ msg: 'Reportes eliminados' });
@@ -798,22 +830,19 @@ const setHolidays = async (req = request, res = response) => {
             const date_moment = moment(holidays[j].date, 'DD/MM/YYYY').format('MM-DD-YYYY');
             const date = new Date(date_moment);
 
-            if (date > new Date()) {
+            if (date.getDay() % 6 !== 0) {
 
-                if (date.getDay() % 6 !== 0) {
+                const report = new Report({
+                    hours: 8,
+                    activity: dia_festivo,
+                    user: users[i],
+                    date: date,
+                    detail: `Día Festivo - ${holidays[j].name}`
+                });
 
-                    const report = new Report({
-                        hours: 8,
-                        activity: dia_festivo,
-                        user: users[i],
-                        date: date,
-                        detail: `Día Festivo - ${holidays[j].name}`
-                    });
-
-                    await report.save();
-                }
-
+                await report.save();
             }
+
         }
 
     }
@@ -822,6 +851,20 @@ const setHolidays = async (req = request, res = response) => {
 
 }
 
+
+const deleteHolidaysTemp = async (req = request, res = response) => {
+
+
+    // Actividad de día festivo
+    const dia_festivo = await Activity.findById('62e60db9a1036e0004686e02');
+
+    const report = await Report
+        .findOneAndDelete({ activity: dia_festivo, date: { "$gte": new Date('2023-01.01') } })
+        .deleteMany();
+
+    res.status(200).json({ msg: report.length });
+
+}
 
 
 function getDates(startDate = new Date(), stopDate = new Date()) {
@@ -856,5 +899,6 @@ module.exports = {
     setHolidays,
     setHolidaysOtrosPaises,
     getAllReportsHoursGeneralActivities,
-    getAllReportsDashboard
+    getAllReportsDashboard,
+    deleteHolidaysTemp
 };

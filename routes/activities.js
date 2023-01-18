@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createActivity, getActivities, assignActivity,
-    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo, openPages } = require('../controllers/activities');
+    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo, openPages, putInactiveOldActivities, putInactiveOldActivitiesGeneral, assignUserToActivityFirstTimeScript } = require('../controllers/activities');
 
 const {
     validateFields, validateJWT
@@ -32,6 +32,12 @@ router.patch('/:id', [
     // check('rol').custom( isValidRole ), 
     validateFields
 ], assignActivity);
+
+
+/**
+ * Asignar auditores a la auditoria en cuestión
+ */
+router.put('/assing/script', assignUserToActivityFirstTimeScript);
 
 router.delete('/:id', [
     validateJWT,
@@ -78,6 +84,12 @@ router.post('/script', createActivitiesScript);
 
 
 router.post('/open/pages', openPages);
+
+
+router.post('/inactive/old', putInactiveOldActivities);
+
+
+router.post('/inactive/old/general', putInactiveOldActivitiesGeneral);
 
 
 module.exports = router;

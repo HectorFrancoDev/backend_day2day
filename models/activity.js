@@ -16,12 +16,12 @@ const ActivitySchema = Schema({
     category: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
-        required: [false, 'Solo para actividades generales']
+        required: [true, 'La categoria es obliagtoria']
     },
     celula: {
         type: Schema.Types.ObjectId,
         ref: 'Celula',
-        required: [false, 'Solo para actividades que pertenecen a una célula']
+        required: [true, 'Todas las actividades pertenecen a una célula']
     },
     name: {
         type: String,
@@ -40,6 +40,9 @@ const ActivitySchema = Schema({
     end_date: {
         type: Date,
         required: [true, 'La fecha final es obligatoria']
+    },
+    real_end_date: {
+        type: Date,
     },
     estimated_hours: {
         type: Number,
@@ -101,10 +104,12 @@ const ActivitySchema = Schema({
             }
         }
     ],
+
     state: {
         type: Boolean,
         default: true
     }
+
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
 
 ActivitySchema.methods.toJSON = function () {

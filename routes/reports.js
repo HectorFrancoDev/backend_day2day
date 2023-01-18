@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createReport, getAllActivitiesFromUser, getAllReports, updateReportById, deleteReportById, deleteMassiveReports,
-    clearDeletedReports, getAllReportsDashboard, createAusentimos, createReportCelula, deleteReportCelulaById, updateReportCelulaById, setHolidays, setHolidaysOtrosPaises, getAllReportsHoursGeneralActivities } = require('../controllers/reports');
+    clearDeletedReports, getAllReportsDashboard, createAusentimos, createReportCelula, deleteReportCelulaById, updateReportCelulaById, setHolidays, setHolidaysOtrosPaises, getAllReportsHoursGeneralActivities, deleteHolidaysTemp } = require('../controllers/reports');
 const { existReportById } = require('../helpers/db-validators');
 const { validateJWT, validateFields } = require('../middlewares');
 
@@ -118,6 +118,8 @@ router.get('/activities', [
 
 
 router.post('/holidays', setHolidays);
+
+router.delete('/holidays/delete', deleteHolidaysTemp);
 
 
 router.post('/otros/paises', setHolidaysOtrosPaises);

@@ -2,36 +2,61 @@ const { response, request } = require('express');
 const Activity = require('../models/activity');
 const Company = require('../models/company.model');
 const Category = require('../models/categories.model');
+const Celula = require('../models/celula.model');
+const User = require('../models/user');
 
 const createActivity = async (req = request, res = response) => {
 
     const {
-        company = 1,
-        name,
-        initial_date,
-        end_date,
-        estimated_hours,
+        codigo_open = 'AUD_0000',
+        company = 1, // Banco Davivienda
+        category = 13, // auditorias
+        name = 'Auditoría ABC',
+        celula_name = 'A',
+        initial_date = new Date('2023-01-01'),
+        end_date = new Date('2023-01-31'),
+        estimated_hours = 1,
         open_state = true,
-        is_general = false
+        is_general = false,
     } = req.body;
 
     // Get Company
     const getCompany = await Company.findOne({ code: company });
 
     if (!getCompany)
-        res.status(401).json({ error: 'No existe la empresa seleccionada' });
+        return res.status(401).json({ error: 'No existe la empresa seleccionada' });
+
+    // Get Category
+    const getCategory = await Category.findOne({ code: category });
+
+    if (!getCategory)
+        return res.status(401).json({ error: 'No existe la categoría seleccionada' });
+
+    // Get Célula
+    const getCelula = await Celula.findOne({ name: celula_name });
+
+    if (!getCelula)
+        return res.status(401).json({ error: 'No existe la celula seleccionada' });
 
     // Verify Activity
-    const verifyActivity = await Activity.findOne({ name: name, company: getCompany });
+    const verifyActivity = await Activity.findOne({ codigo_open });
 
     if (verifyActivity)
-
         return res.status(401).json({ error: 'Esta actividad ya existe en el Project Plan' });
 
 
     // Crear Actividad nueva
     const activity = new Activity({
-        company: getCompany, name, open_state, initial_date, end_date, estimated_hours, is_general
+        codigo_open,
+        getCategory,
+        getCompany,
+        name,
+        getCelula,
+        initial_date,
+        end_date,
+        estimated_hours,
+        open_state,
+        is_general
     });
 
     // Guardar en BD
@@ -39,43 +64,86 @@ const createActivity = async (req = request, res = response) => {
 
     res.json({ activity });
 
-
 };
+
 
 const createActivitiesScript = async (req, res = response) => {
 
     const { data } = req.body;
 
+    if (!data)
+        return res.status(401).json({ error: 'No existe el arreglo data en la petición' });
+
+    if (data.length === 0)
+        return res.status(401).json({ error: 'No hay datos en el arreglo data' });
+
     for (let i = 0; i < data.length; i++) {
 
         const {
-            company = 1,
-            name,
+            codigo_open = 'AUD_0000',
+            company = 1, // Banco Davivienda
+            category = 13, // auditorias
+            name = 'Auditoría ABC',
+            celula_name = 'A',
+            initial_date = new Date('2023-01-01'),
+            end_date = new Date('2023-01-31'),
+            estimated_hours = 1,
             open_state = true,
-            initial_date = new Date(initial_date),
-            end_date = new Date(end_date),
-            estimated_hours,
             is_general = false,
-            country = 'CO' } = data[i];
 
+        } = data[i];
+
+        // console.log('i: ' + i + ' : ' + data[i]);
+
+        // Get Company
+        const getCompany = await Company.findOne({ code: company });
+
+        if (!getCompany)
+            return res.status(401).json({ error: 'No existe la empresa seleccionada' + ' CÓDIGO OPEN: ' + codigo_open });
+
+        // Get Category
+        const getCategory = await Category.findOne({ code: category });
+
+        if (!getCategory)
+            return res.status(401).json({ error: 'No existe la categoría seleccionada' + ' CÓDIGO OPEN: ' + codigo_open });
+
+        // Get Célula
+        const getCelula = await Celula.findOne({ name: celula_name });
+
+        if (!getCelula)
+            return res.status(401).json({ error: 'No existe la celula seleccionada' + ' CÓDIGO OPEN: ' + codigo_open });
+
+        // Verify Activity
+        const verifyActivity = await Activity.findOne({ codigo_open });
+
+        if (verifyActivity)
+            return res.status(401).json({ error: 'Esta actividad ya existe en el Project Plan' + ' CÓDIGO OPEN: ' + codigo_open });
+
+
+        // Crear Actividad nueva
         const activity = new Activity({
-            company,
+            codigo_open,
+            category: getCategory,
+            company: getCompany,
+            celula: getCelula,
             name,
-            open_state,
             initial_date,
             end_date,
             estimated_hours,
-            is_general,
-            country
+            open_state,
+            is_general
         });
+
         // Guardar en BD
         await activity.save();
+        // console.log(activity);
+
     }
 
-    res.json({
-        ok: true
-    });
+    res.json({ msg: 'Actividades / Misiones guardadas con éxito' });
+
 };
+
 
 const getActivities = async (req = request, res = response) => {
 
@@ -129,6 +197,73 @@ const getActivityById = async (req = request, res = response) => {
     ]);
 
     res.status(200).json({ total, activity });
+
+}
+
+/**
+ * Asignar un usuario a una actividad en especifico
+ * @param {Request} req 
+ * @param {Response} res 
+ */
+const assignUserToActivityFirstTimeScript = async (req = request, res = response) => {
+
+    const { data } = req.body;
+
+    if (!data)
+        return res.status(401).json({ error: 'Debes enviar el parámetro Data' });
+
+    if (data.length === 0)
+        return res.status(401).json({ error: 'El parámetro Data se encuentra vacío' });
+
+
+    for (let i = 0; i < data.length; i++) {
+
+        let activity = await Activity.findOne({ codigo_open: data[i].codigo_open });
+
+        if (!activity)
+            return res.status(401).json({ error: 'La actividad con código Open: ' + data[i].codigo_open + ' no existe' });
+
+        // Resetear horas planeadas de la actividad como tal a cero (0)
+        activity.estimated_hours = 0;
+
+        for (let j = 0; j < data[i].users.length; j++) {
+
+            const user = await User.findOne({ email: data[i].users[j].email });
+
+            if (!user)
+                return res.status(401)
+                    .json({ error: 'No se encuentra el usuario "' + data[i].users[j].email + '" en la auditoría [' + data[i].codigo_open + ']' });
+
+            // Verificar si el usuario ya existe o no
+            // Si no existe se le asigna a la actividad
+            // Si existe se salta la asignación de este
+            const indexUser = await activity.users.findIndex((u) => u.user.toString() == user._id.toString());
+
+            if (indexUser === -1) {
+
+                activity.users.push({
+                    user,
+                    estimated_hours: data[i].users[j].planned_hours,
+                    logs: [{ description: 'Auditor asignado' }]
+                });
+            }
+
+        }
+
+        // Sumatoria de las horas estimadas por auditor a la actividad / misión
+        // con base a las horas asignadas por usuario dentro de la actividad / misión
+        for (let u = 0; u < activity.users.length; u++) {
+            activity.estimated_hours += activity.users[u].estimated_hours;
+        }
+
+        // TODO: Revisar antes de ejecutar
+        await activity.save();
+
+        // console.log(activity);
+    }
+
+    res.status(200).json({ msg: 'Usuarios asignados con éxito' });
+
 
 }
 
@@ -242,22 +377,29 @@ const getSpecificActivities = async (req, res = response) => {
     res.json({ activities });
 };
 
+/**
+ * Obtener la lista de actividades que pertenecen a la categoría de ausentismos
+ * @param {*} req 
+ * @param {*} res 
+ */
 const getActividadesAusentismo = async (req, res = response) => {
 
     const user_id = req.user._id;
 
     if (!user_id)
-        res.status(400).json({ error: 'No se encuentra el auditor ' })
+        res.status(400).json({ error: 'No se encuentra el auditor ' });
+
+    const ausentismo = await Category.findOne({ code: 1 });
 
     const activities = await Activity.find(
         {
-            is_general: true, state: true
+            is_general: false, state: true, category: ausentismo
         })
         .populate({
             path: 'category', select: ['name', 'code']
         })
 
-    res.json({ activities });
+    res.status(200).json({ activities });
 };
 
 
@@ -285,19 +427,19 @@ const openPages = async (req = request, res = response) => {
 
             const activity = await Activity.findOne({ name: nombre, company });
 
-            
+
             if (activity) {
-                
+
                 activity.open_state = cerrado === 'Sí' ? false : true;
                 activity.codigo_open = codigo;
                 activity.estimated_hours = horas_estimadas;
                 activity.initial_date = new Date(inicio_planificado_date);
                 activity.end_date = new Date(fin_planificado_date);
-                
+
                 await activity.save();
 
                 // contadorHallazgos.push({ nombre, codigo, compania })
-           
+
             }
         }
 
@@ -411,9 +553,68 @@ const deleteActivityById = async (req = request, res = response) => {
 
 }
 
+
+
+const putInactiveOldActivities = async (req = request, res = response) => {
+
+    const { year } = req.body;
+
+    if (!year)
+        return res.status(401).json({ error: 'Debes agregar un año de cierre de auditoría para desactivarlas' });
+
+    const activities = await Activity.find({ is_general: false });
+
+
+    // const filtrado = activities.filter((activity) => !activity.name.startsWith('INC'));
+    const filtrado = activities.filter((activity) => activity.name.startsWith('INC'));
+
+
+    for (let i = 0; i < filtrado.length; i++) {
+
+        filtrado[i].state = false;
+        // console.log(filtrado[i].name);
+
+        for (let j = 0; j < filtrado[i].users.length; j++) {
+
+            // console.log(":::::" + filtrado[i].users[j].user);
+            filtrado[i].users[j].is_active = false;
+
+        }
+
+        await filtrado[i].save();
+    }
+
+    res.status(200).json({ msg: 'Auditorías pasadas eliminadas con éxito' });
+}
+
+
+const putInactiveOldActivitiesGeneral = async (req = request, res = response) => {
+
+
+    const { year } = req.body;
+
+    if (!year)
+        return res.status(401).json({ error: 'Debes agregar un año de cierre de auditoría para desactivarlas' });
+
+    const activities = await Activity.find({ is_general: true });
+
+
+    for (let i = 0; i < activities.length; i++) {
+
+        activities[i].state = false;
+        await activities[i].save();
+    }
+
+    res.status(200).json({ msg: 'Auditorías pasadas eliminadas con éxito' });
+
+}
+
+
+
 module.exports = {
     createActivity,
     createActivitiesScript,
+    assignUserToActivityFirstTimeScript,
     getActivityById,
     getActivities,
     assignActivity,
@@ -422,5 +623,7 @@ module.exports = {
     deleteActivityById,
     editActivitiesCategories,
     openPages,
-    getActividadesAusentismo
+    getActividadesAusentismo,
+    putInactiveOldActivities,
+    putInactiveOldActivitiesGeneral
 };

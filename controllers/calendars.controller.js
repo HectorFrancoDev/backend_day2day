@@ -8,7 +8,7 @@ const Country = require('../models/country.model');
 
 const createHolidays = async (req = request, res = response) => {
 
-    const { countryCode = 'CO', year = '2022' } = req.params;
+    const { countryCode = 'CO', year = '2023' } = req.params;
 
     const country = await Country.findOne({ code: countryCode });
 

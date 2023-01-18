@@ -1,4 +1,5 @@
 const { Schema, model } = require('mongoose');
+const { required } = require('nodemon/lib/config');
 
 const CelulaSchema = Schema({
     name: {
@@ -8,7 +9,8 @@ const CelulaSchema = Schema({
     },
     code: {
         type: Number,
-        trim: true
+        trim: true,
+        required: [true, 'El código de la célula es obligatorio']
     }
 
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });
