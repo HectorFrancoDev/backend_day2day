@@ -77,6 +77,9 @@ const createActivitiesScript = async (req, res = response) => {
     if (data.length === 0)
         return res.status(401).json({ error: 'No hay datos en el arreglo data' });
 
+    // Contador de aduitoías repetidas
+    const aud_repetidas = [];
+
     for (let i = 0; i < data.length; i++) {
 
         const {
@@ -92,8 +95,6 @@ const createActivitiesScript = async (req, res = response) => {
             is_general = false,
 
         } = data[i];
-
-        // console.log('i: ' + i + ' : ' + data[i]);
 
         // Get Company
         const getCompany = await Company.findOne({ code: company });
@@ -116,11 +117,13 @@ const createActivitiesScript = async (req, res = response) => {
         // Verify Activity
         const verifyActivity = await Activity.findOne({ codigo_open });
 
-        if (verifyActivity)
-            return res.status(401).json({ error: 'Esta actividad ya existe en el Project Plan' + ' CÓDIGO OPEN: ' + codigo_open });
+        if (verifyActivity) {
+            // return res.status(401).json({ error: 'Esta actividad ya existe en el Project Plan' + ' CÓDIGO OPEN: ' + codigo_open }); 
+            aud_repetidas.push(codigo_open);
+            continue;
+        }
 
-
-        // Crear Actividad nueva
+        // Crear actividad / misión
         const activity = new Activity({
             codigo_open,
             category: getCategory,
@@ -136,11 +139,14 @@ const createActivitiesScript = async (req, res = response) => {
 
         // Guardar en BD
         await activity.save();
-        // console.log(activity);
 
     }
 
-    res.json({ msg: 'Actividades / Misiones guardadas con éxito' });
+    res.json({
+        msg: `Actividades / Misiones guardadas con éxito: ${data.length - aud_repetidas.length} / ${data.length}`,
+        repetidas: `AUD Repetidas: ${aud_repetidas.length} a revisar`,
+        aud_repetidas
+    });
 
 };
 
@@ -242,7 +248,9 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
             if (indexUser === -1) {
 
                 activity.users.push({
-                    user,
+                    user: user,
+                    initial_date: new Date(data[i].users[j].initial_date),
+                    end_date: new Date(data[i].users[j].end_date),
                     estimated_hours: data[i].users[j].planned_hours,
                     logs: [{ description: 'Auditor asignado' }]
                 });
@@ -491,7 +499,6 @@ const editActivities = async (req = request, res = response) => {
 
 }
 
-
 const editActivitiesCategories = async (req = request, res = response) => {
 
     const { data } = req.body;
@@ -531,7 +538,6 @@ const editActivitiesCategories = async (req = request, res = response) => {
     }
 
 }
-
 
 const deleteActivityById = async (req = request, res = response) => {
 

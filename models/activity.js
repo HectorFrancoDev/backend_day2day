@@ -66,6 +66,19 @@ const ActivitySchema = Schema({
                 ref: 'User'
             },
 
+            initial_date: {
+                type: Date,
+                required: [true, 'La fecha inicial planeada del auditor es obligatoria']
+            },
+            end_date: {
+                type: Date,
+                required: [true, 'La fecha final planeada del auditor es obligatoria']
+            },
+            real_end_date: {
+                type: Date,
+                required: [false, 'Solo cuando se traiga la data desde Open Pages']
+            },
+
             // Estado dentro de la actividad
             // true: activo
             // false: desaactivado (salió, terminó)
