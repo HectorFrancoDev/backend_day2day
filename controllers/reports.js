@@ -28,15 +28,11 @@ const createReport = async (req, res = response) => {
     data.hours = Number(data.hours);
     data.user = req.user._id + '';
 
-    if (data.activity === null || typeof (data.activity) !== 'string') {
-        console.log({ error: 'No hay ID o no es un String' });
+    if (data.activity === null || typeof (data.activity) !== 'string')
         return res.status(400).json({ error: 'No es posible cargar la actividad' });
-    }
 
-    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
-        console.log({ error: 'No es un ID válido de Mongo' });
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).json({ error: 'No es un ID válido de Mongo' });
-    }
 
     // Crear reporte de la actividad
     const report = new Report(data);
@@ -45,11 +41,9 @@ const createReport = async (req, res = response) => {
     const activity = await Activity.findById(data.activity);
 
     // Actualizar el número de horas trabajadas por el usuario en la actividad / misión
-    const indexUser = activity.users.findIndex(u => u.user == data.user);
-    if (indexUser !== -1) {
-        activity.users[indexUser].worked_hours += data.hours;
-        activity.worked_hours += data.hours;
-    }
+    activity.users[data.position_user].worked_hours += data.hours;
+    activity.worked_hours += data.hours;
+
 
     // Guardar DB
     await report.save();
@@ -385,21 +379,17 @@ const createAusentimos = async (req = request, res = response) => {
  */
 const updateReportById = async (req, res = response) => {
 
-    console.log('Entraron reports.js:301');
+    console.log('reports.js:384');
 
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
-
-    if (data.activity === null || typeof (data.activity) !== 'string') {
-        console.log({ error: 'No hay ID o no es un String' });
+    if (data.activity === null || typeof (data.activity) !== 'string') 
         return res.status(400).json({ error: 'No es posible cargar la actividad' });
-    }
-
-    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) {
-        console.log({ error: 'No es un ID válido de Mongo' });
+    
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) 
         return res.status(400).json({ error: 'No es un ID válido de Mongo' });
-    }
+    
 
     const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
 
@@ -410,52 +400,40 @@ const updateReportById = async (req, res = response) => {
     const activity = await Activity.findById(data.activity);
 
     // Si la actividad a editar es diferente
-    if (old_activity._id.toString() !== activity._id.toString()) {
+    if (data.old_activity !== data.activity) {
 
-        const indexUserOldActivity = old_activity.users.findIndex(u => u.user == user._id.toString());
-        const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
+        // Elimina las horas trabajadas por usuario en la actividad anterior
+        old_activity.users[data.position_user_old_activity].worked_hours -= data.current_hours;
+        old_activity.worked_hours -= data.current_hours;
+        
+        
+        // Agrega las horas a la actividad escogida luego de editar el reporte
+        activity.users[data.position_user].worked_hours += data.hours;
+        activity.worked_hours += data.hours;
+        
+        await old_activity.save();
+        // await activity.save();
 
-        if (indexUserOldActivity !== -1) {
-
-            old_activity.users[indexUserOldActivity].worked_hours -= data.current_hours;
-            old_activity.worked_hours -= data.current_hours;
-
-            await old_activity.save();
-        }
-
-        if (indexUser !== -1) {
-
-            activity.users[indexUser].worked_hours += data.hours;
-            activity.worked_hours += data.hours;
-
-            await activity.save();
-        }
     }
 
     // Si es la misma actividad a la actual
     else {
         // Actualizar el número de horas trabajadas por el usuario en la actividad
 
-        const indexUser = activity.users.findIndex(u => u.user == user._id.toString());
+        activity.users[data.position_user].worked_hours -= data.current_hours;
+        activity.worked_hours -= data.current_hours;
 
-        if (indexUser !== -1) {
-
-            activity.users[indexUser].worked_hours -= data.current_hours;
-            activity.worked_hours -= data.current_hours;
-
-            activity.users[indexUser].worked_hours += data.hours;
-            activity.worked_hours += data.hours;
-
-            await activity.save();
-        }
+        activity.users[data.position_user].worked_hours += data.hours;
+        activity.worked_hours += data.hours;
 
     }
-
+    
     report.activity = activity;
     report.detail = data.detail;
     report.hours = data.hours;
     report.date = data.date;
-
+    
+    await activity.save();
     await report.save();
 
 
@@ -556,6 +534,8 @@ const deleteReportById = async (req, res = response) => {
         return res.status(400).json({ error: 'No es un ID válido de Mongo' });
     }
 
+
+
     const query = {
         $and: [{ '_id': id }, { 'user': req.user._id }]
     };
@@ -565,11 +545,12 @@ const deleteReportById = async (req, res = response) => {
     const queryActivity = { '_id': reportDeleted.activity._id };
     const activity = await Activity.findById(queryActivity);
 
-    // Update worked hours
+    // Delete worked hours
     const indexUser = activity.users.findIndex((u) => u.user._id.toString() == req.user._id.toString());
     if (indexUser !== -1) {
         activity.users[indexUser].worked_hours -= reportDeleted.hours;
         activity.worked_hours -= reportDeleted.hours;
+
         await Activity.findByIdAndUpdate(queryActivity, activity, { new: true });
     }
 

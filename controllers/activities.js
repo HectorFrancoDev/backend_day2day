@@ -369,9 +369,9 @@ const getSpecificActivities = async (req, res = response) => {
 
     const activities = await Activity.find(
         {
-            $or: [
-                { users: { $elemMatch: { user: user_id, is_active: true } } },
-                { is_general: true, state: true }
+            $and: [
+                { state: true },
+                { users: { $elemMatch: { user: user_id, is_active: true } } }
             ]
         })
         .populate({
@@ -380,8 +380,8 @@ const getSpecificActivities = async (req, res = response) => {
         })
         .populate({
             path: 'category', select: ['name', 'code']
-        })
-
+        });
+        
     res.json({ activities });
 };
 
