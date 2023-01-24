@@ -2,7 +2,6 @@ const { Schema, model } = require('mongoose');
 
 
 const ActivitySchema = Schema({
-    // FIXME: Arreglar esto cuando venga
     company: {
         type: Schema.Types.ObjectId,
         ref: 'Company',

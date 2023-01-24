@@ -7,6 +7,8 @@ const Role = require('../models/role.model');
 const Country = require('../models/country.model');
 const Area = require('../models/area.model');
 
+const process = require('process');
+
 const fc = require('festivos-colombia');
 
 const moment = require('moment');
@@ -20,7 +22,7 @@ const moment = require('moment');
  */
 const createReport = async (req, res = response) => {
 
-    console.log('Entraron reports.js:20');
+    console.log('Entraron reports.js:25');
 
     // Generar la data a guardar
     const { ...data } = req.body;
@@ -50,6 +52,12 @@ const createReport = async (req, res = response) => {
     await activity.save();
 
     res.status(201).json(report);
+
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${value / 1000000}MB`);
+    }
+
 };
 
 /**
@@ -168,6 +176,11 @@ const getAllReports = async (req, res = response) => {
                 }
             })
     ]);
+
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${value / 1000000}MB`);
+    }
 
     res.json({
         total,
@@ -384,12 +397,12 @@ const updateReportById = async (req, res = response) => {
     const { id } = req.params;
     const { state, user, ...data } = req.body;
 
-    if (data.activity === null || typeof (data.activity) !== 'string') 
+    if (data.activity === null || typeof (data.activity) !== 'string')
         return res.status(400).json({ error: 'No es posible cargar la actividad' });
-    
-    if (!data.activity.match(/^[0-9a-fA-F]{24}$/)) 
+
+    if (!data.activity.match(/^[0-9a-fA-F]{24}$/))
         return res.status(400).json({ error: 'No es un ID válido de Mongo' });
-    
+
 
     const query = { $and: [{ '_id': id }, { 'user': req.user._id }, { 'state': true }] };
 
@@ -405,12 +418,12 @@ const updateReportById = async (req, res = response) => {
         // Elimina las horas trabajadas por usuario en la actividad anterior
         old_activity.users[data.position_user_old_activity].worked_hours -= data.current_hours;
         old_activity.worked_hours -= data.current_hours;
-        
-        
+
+
         // Agrega las horas a la actividad escogida luego de editar el reporte
         activity.users[data.position_user].worked_hours += data.hours;
         activity.worked_hours += data.hours;
-        
+
         await old_activity.save();
         // await activity.save();
 
@@ -427,12 +440,12 @@ const updateReportById = async (req, res = response) => {
         activity.worked_hours += data.hours;
 
     }
-    
+
     report.activity = activity;
     report.detail = data.detail;
     report.hours = data.hours;
     report.date = data.date;
-    
+
     await activity.save();
     await report.save();
 
@@ -780,6 +793,81 @@ const setHolidaysOtrosPaises = async (req = request, res = response) => {
 }
 
 
+const setHolidaysNewColombia = async (req = request, res = response) => {
+
+    const { year } = req.body;
+
+    if (!year)
+        res.status(401).json({ error: 'No se encuentra el campo year' })
+
+    // if (typeof (year) !== Number)
+    // res.status(401).json({ error: 'Se espera un valor numero entero' })
+
+
+    // Actividad de día festivo
+    // const dia_festivo = await Activity.find({ codigo_open: 'ACT_0040' });
+    const dia_festivo = await Activity.findById('63d04bb913ea0b49c80b6431');
+
+    if (!dia_festivo)
+        res.status(401).json({ error: 'No se encuentra el Día Festivo' });
+
+
+    dia_festivo.estimated_hours = 0;
+    dia_festivo.worked_hours = 0;
+
+    for (let i = 0; i < dia_festivo.users.length; i++) {
+
+        dia_festivo.users[i].estimated_hours = 0;
+        dia_festivo.users[i].worked_hours = 0;
+
+    }
+
+
+    let holidays = fc.getHolidaysByYear(year);
+
+
+    for (let j = 0; j < holidays.length; j++) {
+
+        for (let i = 0; i < dia_festivo.users.length; i++) {
+
+            const user = await User.findById(dia_festivo.users[i].user);
+
+            if (user.email.endsWith("davivienda.com")) {
+
+                const date_moment = moment(holidays[j].date, 'DD/MM/YYYY').format('MM-DD-YYYY');
+                const date = new Date(date_moment);
+
+                if (date.getDay() % 6 !== 0) {
+
+                    const report = new Report({
+                        hours: 8,
+                        activity: dia_festivo,
+                        user,
+                        date: date,
+                        detail: `Día Festivo - ${holidays[j].name}`
+                    });
+
+                    // reports.push(report);
+                    await report.save();
+
+                    dia_festivo.worked_hours += report.hours;
+                    dia_festivo.estimated_hours += report.hours;
+
+                    dia_festivo.users[i].worked_hours += report.hours;
+                    dia_festivo.users[i].estimated_hours += report.hours;
+                }
+            }
+        }
+    }
+
+
+    await dia_festivo.save();
+
+    res.status(200).json({ msg: 'Festivos en Colombia cargados completamente', dia_festivo });
+
+}
+
+
 const setHolidays = async (req = request, res = response) => {
 
 
@@ -836,11 +924,11 @@ const setHolidays = async (req = request, res = response) => {
 const deleteHolidaysTemp = async (req = request, res = response) => {
 
 
-    // Actividad de día festivo
-    const dia_festivo = await Activity.findById('62e60db9a1036e0004686e02');
+    // TODO: Actividad de día festivo ANTIGUO
+    const dia_festivo = await Activity.findById('63d04bb913ea0b49c80b6431');
 
     const report = await Report
-        .findOneAndDelete({ activity: dia_festivo, date: { "$gte": new Date('2023-01.01') } })
+        .findOneAndDelete({ activity: dia_festivo, date: { "$gte": new Date('2023-01-01') } })
         .deleteMany();
 
     res.status(200).json({ msg: report.length });
@@ -878,6 +966,7 @@ module.exports = {
     getAllActivitiesFromUser,
     createAusentimos,
     setHolidays,
+    setHolidaysNewColombia,
     setHolidaysOtrosPaises,
     getAllReportsHoursGeneralActivities,
     getAllReportsDashboard,

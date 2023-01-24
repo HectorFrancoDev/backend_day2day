@@ -264,10 +264,7 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
             activity.estimated_hours += activity.users[u].estimated_hours;
         }
 
-        // TODO: Revisar antes de ejecutar
         await activity.save();
-
-        // console.log(activity);
     }
 
     res.status(200).json({ msg: 'Usuarios asignados con éxito' });
@@ -370,7 +367,7 @@ const getSpecificActivities = async (req, res = response) => {
     const activities = await Activity.find(
         {
             $and: [
-                { state: true },
+                { state: true, is_general: false },
                 { users: { $elemMatch: { user: user_id, is_active: true } } }
             ]
         })
@@ -381,7 +378,7 @@ const getSpecificActivities = async (req, res = response) => {
         .populate({
             path: 'category', select: ['name', 'code']
         });
-        
+
     res.json({ activities });
 };
 
