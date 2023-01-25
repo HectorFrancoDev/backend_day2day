@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createReport, getAllActivitiesFromUser, getAllReports, updateReportById, deleteReportById, deleteMassiveReports,
-    clearDeletedReports, getAllReportsDashboard, createAusentimos, createReportCelula, deleteReportCelulaById, updateReportCelulaById, setHolidays, setHolidaysOtrosPaises, getAllReportsHoursGeneralActivities, deleteHolidaysTemp, setHolidaysNewColombia } = require('../controllers/reports');
+    clearDeletedReports, getAllReportsDashboard, createAusentimos, createReportCelula, deleteReportCelulaById, updateReportCelulaById, setHolidays, setHolidaysOtrosPaises, getAllReportsHoursGeneralActivities, deleteHolidaysTemp, setHolidaysNewColombia, editVacactionsToTheNewActivity, editBirthdayToTheNewActivity, getReportsWithOldActivities } = require('../controllers/reports');
 const { existReportById } = require('../helpers/db-validators');
 const { validateJWT, validateFields } = require('../middlewares');
 
@@ -121,6 +121,12 @@ router.post('/holidays/colombia', setHolidaysNewColombia);
 router.post('/holidays', setHolidays);
 
 router.delete('/holidays/delete', deleteHolidaysTemp);
+
+router.post('/vacations', editVacactionsToTheNewActivity);
+router.post('/birthday', editBirthdayToTheNewActivity); 
+
+
+router.get('/old_activities', getReportsWithOldActivities); 
 
 
 router.post('/otros/paises', setHolidaysOtrosPaises);

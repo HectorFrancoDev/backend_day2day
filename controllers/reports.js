@@ -936,6 +936,152 @@ const deleteHolidaysTemp = async (req = request, res = response) => {
 }
 
 
+
+const editVacactionsToTheNewActivity = async (req = request, res = response) => {
+
+
+    // Old vacaciones
+    const old_vacation = await Activity.findById('61e1be2edac8cb0004edc942');
+
+    // New vacaciones
+    const new_vacation = await Activity.findById('63c6ee47594db53dac4239b5');
+
+
+    const query = {
+        $and: [
+            { 'state': true },
+            { 'activity': old_vacation },
+            { 'date': { $gte: new Date('2022-12-31') } }
+        ]
+    };
+
+    const [total, reports] = await Promise.all([
+        Report.countDocuments(query),
+        Report.find(query)
+    ]);
+
+
+    for (let i = 0; i < total; i++) {
+
+        const index = new_vacation.users.findIndex((u) => u.user.toString() == reports[i].user.toString());
+        if (index !== -1) {
+
+            reports[i].activity = new_vacation;
+            new_vacation.users[index].worked_hours += reports[i].hours;
+            new_vacation.worked_hours += reports[i].hours;
+
+        }
+
+        prueba.push(reports[i]);
+        // TODO: para cuando se tengan las vacaciones de centro america
+        // await reports[i].save();
+
+    }
+
+
+    // TODO: para cuando se tengan las vacaciones de centro america
+    // await new_vacation.save();
+    res.status(200).json({ msg: 'OK' });
+
+
+    // {activity: ObjectId('626d7634df29c30004ebb1d2'), date: {$gte: new Date('2023-01-01')}, state: true}
+
+}
+
+const editBirthdayToTheNewActivity = async (req = request, res = response) => {
+
+
+    // Old vacaciones
+    const old_birthday = await Activity.findById('626d7634df29c30004ebb1d2');
+
+    // New vacaciones
+    const new_birthday = await Activity.findById('63c6ee46594db53dac4239a3');
+
+
+    const query = {
+        $and: [
+            { 'state': true },
+            { 'activity': old_birthday },
+            { 'date': { $gte: new Date('2022-12-31') } }
+        ]
+    };
+
+    const [total, reports] = await Promise.all([
+        Report.countDocuments(query),
+        Report.find(query)
+    ]);
+
+
+
+    const prueba = [];
+
+    for (let i = 0; i < total; i++) {
+
+        const index = new_birthday.users.findIndex((u) => u.user.toString() == reports[i].user.toString());
+        if (index !== -1) {
+
+            reports[i].activity = new_birthday;
+            new_birthday.users[index].worked_hours += reports[i].hours;
+            new_birthday.worked_hours += reports[i].hours;
+
+            await reports[i].save();
+        }
+
+        // prueba.push(reports[i]);
+        // TODO: para cuando se tengan las vacaciones de centro america
+
+    }
+
+    // console.log(prueba.length);
+
+    // TODO: para cuando se tengan las vacaciones de centro america
+    await new_birthday.save();
+    res.status(200).json({ msg: 'OK' });
+
+
+    // {activity: ObjectId('626d7634df29c30004ebb1d2'), date: {$gte: new Date('2023-01-01')}, state: true}
+
+}
+
+
+
+const getReportsWithOldActivities = async (req = request, res = response) => {
+
+    const [total_old, old_activities] = await Promise.all([
+        Activity.countDocuments({ state: false }),
+        Activity.find({ state: false })
+    ]);
+
+    const reports_to_update = [];
+
+
+    for (let i = 0; i < total_old; i++) {
+
+        const query = {
+            $and: [
+                { 'state': true },
+                { 'activity': old_activities[i] },
+                { 'date': { $gte: new Date('2022-12-31') } }
+            ]
+        };
+
+
+        const report = await Report.find(query);
+
+        reports_to_update.push(report);
+    }
+
+    console.log(reports_to_update.length);
+
+    res.status(200).json({ msg: 'Se hizo' });
+
+}
+
+
+
+
+
+
 function getDates(startDate = new Date(), stopDate = new Date()) {
 
     var dateArray = new Array();
@@ -951,6 +1097,10 @@ function getDates(startDate = new Date(), stopDate = new Date()) {
 
     return dateArray;
 }
+
+
+
+
 
 
 
@@ -970,5 +1120,9 @@ module.exports = {
     setHolidaysOtrosPaises,
     getAllReportsHoursGeneralActivities,
     getAllReportsDashboard,
-    deleteHolidaysTemp
+    deleteHolidaysTemp,
+
+    editVacactionsToTheNewActivity,
+    editBirthdayToTheNewActivity,
+    getReportsWithOldActivities
 };

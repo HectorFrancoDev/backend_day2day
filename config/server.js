@@ -27,6 +27,7 @@ class Server {
             areas: '/api/areas',
             calendars: '/api/calendars',
             celulas: '/api/celulas',
+            triggers: '/api/triggers',
         };
 
         // Conectar a base de datos
@@ -63,17 +64,18 @@ class Server {
     }
 
     routes() {
-        this.app.use(this.paths.users, require('../routes/users'));
-        this.app.use(this.paths.reports, require('../routes/reports'));
-        this.app.use(this.paths.auth, require('../routes/auth'));
-        this.app.use(this.paths.activities, require('../routes/activities'));
-        this.app.use(this.paths.categories, require('../routes/categories.routing'));
-        this.app.use(this.paths.countries, require('../routes/countries.routing'));
-        this.app.use(this.paths.companies, require('../routes/companies.routing'));
-        this.app.use(this.paths.roles, require('../routes/roles.routing'));
-        this.app.use(this.paths.areas, require('../routes/areas.routing'));
-        this.app.use(this.paths.calendars, require('../routes/calendars.routing'));
-        this.app.use(this.paths.celulas, require('../routes/celulas.routing'));
+        this.app.use(this.paths.users,       require('../routes/users'));
+        this.app.use(this.paths.reports,     require('../routes/reports'));
+        this.app.use(this.paths.auth,        require('../routes/auth'));
+        this.app.use(this.paths.activities,  require('../routes/activities'));
+        this.app.use(this.paths.categories,  require('../routes/categories.routing'));
+        this.app.use(this.paths.countries,   require('../routes/countries.routing'));
+        this.app.use(this.paths.companies,   require('../routes/companies.routing'));
+        this.app.use(this.paths.roles,       require('../routes/roles.routing'));
+        this.app.use(this.paths.areas,       require('../routes/areas.routing'));
+        this.app.use(this.paths.calendars,   require('../routes/calendars.routing'));
+        this.app.use(this.paths.celulas,     require('../routes/celulas.routing'));
+        this.app.use(this.paths.triggers,    require('../routes/triggers.routing'));
     }
 
     listen() {
