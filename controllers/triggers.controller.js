@@ -7,7 +7,6 @@ const { response, request } = require('express');
  */
 const triggerWakeUp = async (req = request, res = response) => {
 
-    console.log('Servidor despierto');
     res.status(200).json({ msg: 'Servidor despierto' });
 
 };
