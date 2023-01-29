@@ -4,6 +4,7 @@ const Company = require('../models/company.model');
 const Category = require('../models/categories.model');
 const Celula = require('../models/celula.model');
 const User = require('../models/user');
+const process = require('process');
 
 const createActivity = async (req = request, res = response) => {
 
@@ -269,6 +270,10 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
 
     res.status(200).json({ msg: 'Usuarios asignados con éxito' });
 
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${value / 1000000} Mb`);
+    }
 
 }
 

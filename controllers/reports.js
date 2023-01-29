@@ -167,7 +167,7 @@ const getAllReports = async (req, res = response) => {
         Report.find(query)
             .populate({ path: 'user', select: ['name', 'email'] })
             .populate({
-                path: 'activity', select: ['name', 'company'],
+                path: 'activity', select: ['codigo_open', 'name', 'company'],
                 populate: {
                     path: 'company', select: ['name', 'code'],
                     populate: {
@@ -177,15 +177,15 @@ const getAllReports = async (req, res = response) => {
             })
     ]);
 
-    // TODO: Editar o eliminar luego :)
-    for (const [key, value] of Object.entries(process.memoryUsage())) {
-        console.log(`Memory usage by ${key}, ${value / 1000000}MB`);
-    }
-
     res.json({
         total,
         reports
     });
+
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${Math.round(value / 1024 / 1024 * 100) / 100} Mb`);;
+    }
 };
 
 
