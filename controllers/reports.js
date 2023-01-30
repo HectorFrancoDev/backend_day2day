@@ -344,43 +344,79 @@ const createAusentimos = async (req = request, res = response) => {
 
         console.log('Entraron reports.js:251');
 
-        const { activity, user, start, end, detail } = req.body;
+        const { activity, user, position_user, start, end, detail } = req.body;
 
 
-        if (activity === null || typeof (activity) !== 'string') {
-            console.log({ error: 'No hay ID o no es un String' });
-            return res.status(400).json({ error: 'No es posible cargar la actividad' });
-        }
+        if (activity === null || typeof (activity) !== 'string')
+            return res.status(500).json({ error: 'No es posible cargar la actividad' });
 
-        if (!activity.match(/^[0-9a-fA-F]{24}$/)) {
-            console.log({ error: 'No es un ID válido de Mongo' });
-            return res.status(400).json({ error: 'No es un ID válido de Mongo' });
-        }
+        if (!activity.match(/^[0-9a-fA-F]{24}$/))
+            return res.status(500).json({ error: 'No es un ID válido de Mongo' });
 
+
+        // Validar actividad
         const activityAusentismo = await Activity.findById(activity);
 
+        if (!activityAusentismo)
+            return res.status(500).json({ error: 'No existe la actividad ingresada' });
+
+
+        // Validar usuario
         const userAusentismo = await User.findById(user);
 
+        if (!userAusentismo)
+            return res.status(500).json({ error: 'No existe el usuario ingresado' });
+
+        if (!userAusentismo.state)
+            return res.status(500).json({ error: 'El usuario ya no hace parte de la Vicepresidencia o de la organización' });
+
+
+        // Validar que se ignoren las fechas que son festivo
         const arrayDates = getDates(new Date(start), new Date(end));
 
         for (let i = 0; i < arrayDates.length; i++) {
 
-            const report = new Report({
-                date: arrayDates[i],
-                activity: activityAusentismo,
-                user: userAusentismo,
-                hours: 8,
-                detail
-            });
+            // Validar si ya hay al menos un reporte guardado en esa fecha 
+            const query = {
+                $and: [
+                    { 'user': userAusentismo },
+                    { 'state': true },
+                    { 'date': { $gte: new Date(moment(arrayDates[i])), $lt: new Date(moment(arrayDates[i]).add(1, 'day')) } }
+                ]
+            };
+            const findReportByDate = await Report.countDocuments(query);
 
-            await report.save();
+
+            if (findReportByDate === 0) {
+
+                const report = new Report({
+                    date: arrayDates[i],
+                    activity: activityAusentismo,
+                    user: userAusentismo,
+                    hours: 8,
+                    detail: detail
+                });
+
+                await report.save();
+
+                activityAusentismo.users[position_user].worked_hours += 8;
+                activityAusentismo.worked_hours += 8;
+
+            }
         }
 
+        await activityAusentismo.save();
         res.status(200).json({ msg: 'Ausentismo creado' });
 
     } catch (error) {
 
         throw new Error(error);
+    }
+
+
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${Math.round(value / 1024 / 1024 * 100) / 100} Mb`);;
     }
 }
 
