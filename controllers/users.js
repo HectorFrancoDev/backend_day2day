@@ -4,12 +4,64 @@ const bcryptjs = require('bcryptjs');
 const User = require('../models/user');
 const Role = require('../models/role.model');
 const Area = require('../models/area.model');
+const Celula = require('../models/celula.model');
+
+
+const assignCellsToUser = async (req = request, res = response) => {
+
+    const { cell_code, users = [] } = req.body;
+
+    if (users.length == 0)
+        return res.status(400).json({ error: 'No hay usuarios a quien asignar' })
+
+    const verifyCell = await Celula.findOne({ name: cell_code })
+
+    if (!verifyCell)
+        return res.status(400).json({ error: 'No se encuentra la célula ' })
+
+    const inactive_users = [];
+
+    for (let i = 0; i < users.length; i++) {
+
+        const user = await User.findOne({ email: users[i] })
+
+        if (!user)
+            return res.status(401)
+                .json({ error: 'No se encuentra el usuario "' + users[i] });
+
+        if (!user.state) {
+            inactive_users.push(users[i]);
+            continue;
+        }
+
+        // Verificar si ya tiene la célula asignada o no
+        // Si no existe se le asigna la célula
+        // Si existe se salta la asignación de este 
+        const indexCelula = await user.celulas.findIndex((c) => {
+            console.log(c);
+            return c.celula.toString() == verifyCell._id.toString()
+        });
+
+        if (indexCelula === -1) {
+
+            user.celulas.push({ celula: verifyCell });
+            await user.save();
+        }
+
+    }
+
+    res.status(200).json({ msg: 'Usuarios asignados con éxito', inactive_users, total_inactivos: `Usuarios inactivos en la plataforma: ${inactive_users.length}` });
+
+
+
+}
 
 /**
  * Crea un nuevo usuario en la base de datos.
  * @param {Request} req 
  * @param {Response} res 
  */
+
 const createUser = async (req, res = response) => {
 
     const {
@@ -22,7 +74,7 @@ const createUser = async (req, res = response) => {
         google = true } = req.body;
 
     const verifyUser = await User.findOne({ email });
-    
+
 
     if (verifyUser)
         return res.status(400).json({ error: 'El usuario ya se encuentra registrado' });
@@ -60,6 +112,7 @@ const getUsers = async (req = request, res = response) => {
         User.find()
             .populate({ path: 'role', select: ['name', 'code'] })
             .populate({ path: 'area', select: ['name', 'code'], populate: { path: 'country', select: ['name', 'code', 'img'] } })
+            .populate({ path: 'celulas', select: ['celula'], populate: { path: 'celula', select: ['name', 'code'] }})
     ])
 
     res.status(200).json({ total, users });
@@ -220,5 +273,7 @@ module.exports = {
     editRoleAndArea,
     usuariosDelete,
     assignSupervisor,
-    createUsersScript
+    createUsersScript,
+
+    assignCellsToUser
 };

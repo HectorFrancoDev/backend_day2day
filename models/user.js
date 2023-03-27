@@ -41,7 +41,15 @@ const UserSchema = Schema({
     supervised_by: {
         type: Schema.Types.ObjectId,
         ref: 'User',
-    }
+    },
+    celulas: [
+        {
+            celula: {
+                type: Schema.Types.ObjectId,
+                ref: 'Celula',
+            }
+        }
+    ]
 
 
 }, { timestamps: { createdAt: 'created_at', updatedAt: 'updated_at' } });

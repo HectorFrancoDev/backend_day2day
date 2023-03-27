@@ -223,6 +223,8 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
         return res.status(401).json({ error: 'El parámetro Data se encuentra vacío' });
 
 
+    const inactive_users = [];
+
     for (let i = 0; i < data.length; i++) {
 
         let activity = await Activity.findOne({ codigo_open: data[i].codigo_open });
@@ -241,6 +243,10 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
                 return res.status(401)
                     .json({ error: 'No se encuentra el usuario "' + data[i].users[j].email + '" en la auditoría [' + data[i].codigo_open + ']' });
 
+            if (!user.state) {
+                inactive_users.push(user.email);
+                continue;
+            }
             // Verificar si el usuario ya existe o no
             // Si no existe se le asigna a la actividad
             // Si existe se salta la asignación de este
@@ -268,7 +274,7 @@ const assignUserToActivityFirstTimeScript = async (req = request, res = response
         await activity.save();
     }
 
-    res.status(200).json({ msg: 'Usuarios asignados con éxito' });
+    res.status(200).json({ msg: 'Usuarios asignados con éxito', inactive_users, total_inactivos: `Usuarios inactivos en la plataforma: ${inactive_users.length}` });
 
     // TODO: Editar o eliminar luego :)
     for (const [key, value] of Object.entries(process.memoryUsage())) {
@@ -618,6 +624,66 @@ const putInactiveOldActivitiesGeneral = async (req = request, res = response) =>
 }
 
 
+const reemplazarRonyPorJuanitoCelulaH = async (req = request, res = response) => {
+
+    const celulaH = await Celula.findById('63c043c458985c4014812d4c');
+
+    if (!celulaH)
+        return res.status(500).json({ error: 'No se encuentra la célula en mención' });
+
+    const query = { celula: celulaH };
+    const [total, activities] = await Promise.all([
+        Activity.countDocuments(query),
+        Activity.find(query)
+    ]);
+
+    const rony = await User.findById('61d7d0448fbbc403142461af');
+    const juan = await User.findById('61d7d03a8fbbc4031424617b');
+
+
+    for (let i = 0; i < total; i++) {
+
+        for (let u = 0; u < activities[i].users.length; u++) {
+
+            if (activities[i].users[u].user == '61d7d0448fbbc403142461af') {
+
+                activities[i].users[u].user = juan;
+                // console.log(`${i + 1} :: ${u}`);
+                await activities[i].save();
+            }
+        }
+    }
+
+    res.status(200).json({ total, msg: 'Reemplazado' });
+
+}
+
+
+const limpiarCelulaFDatos = async(req = request, res = response) => {
+
+    const celula_F = await Celula.findById('63c043c358985c4014812d48');
+    
+    if (!celula_F)
+        return res.status(500).json({ error: 'No se encuentra la célula en mención' });
+
+    const query = { celula: celula_F };
+    const [total, activities] = await Promise.all([
+        Activity.countDocuments(query),
+        Activity.find(query)
+    ]);
+
+    for (let i = 0; i < total; i++) {
+        
+        activities[i].users = [];
+        await activities[i].save();
+        
+    }
+
+    res.status(200).json({total});
+
+}
+
+
 
 module.exports = {
     createActivity,
@@ -633,5 +699,9 @@ module.exports = {
     openPages,
     getActividadesAusentismo,
     putInactiveOldActivities,
-    putInactiveOldActivitiesGeneral
+    putInactiveOldActivitiesGeneral,
+
+
+    reemplazarRonyPorJuanitoCelulaH,
+    limpiarCelulaFDatos
 };

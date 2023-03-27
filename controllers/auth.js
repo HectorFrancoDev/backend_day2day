@@ -24,6 +24,10 @@ const login = async (req, res = response) => {
             .populate({
                 path: 'area', select: ['name', 'code'],
                 populate: { path: 'country', select: ['name', 'code', 'img'] }
+            })
+            .populate({
+                path: 'celulas', select: ['celula'],
+                populate: { path: 'celula', select: ['name', 'code'] }
             });
 
         if (!user) //El usuario no existe.
@@ -109,6 +113,10 @@ const googleSignIn = async (req = request, res = response) => {
             .populate({
                 path: 'area', select: ['name', 'code'],
                 populate: { path: 'country', select: ['name', 'code', 'img'] }
+            })
+            .populate({
+                path: 'celulas', select: ['celula'],
+                populate: { path: 'celula', select: ['name', 'code'] }
             });
 
         // Verificaciones de seguridad
@@ -145,6 +153,10 @@ const googleSignIn = async (req = request, res = response) => {
                 .populate({
                     path: 'area', select: ['name', 'code'],
                     populate: { path: 'country', select: ['name', 'code', 'img'] }
+                })
+                .populate({
+                    path: 'celulas', select: ['celula'],
+                    populate: { path: 'celula', select: ['name', 'code'] }
                 });
 
 
@@ -152,7 +164,7 @@ const googleSignIn = async (req = request, res = response) => {
         res.status(200).json({ user, token });
 
     } catch (error) {
-        
+
         res.status(400).json({ error: 'Error de autentificación, refresca la página por favor' });
     }
 

@@ -1,7 +1,7 @@
 const { Router } = require('express');
 const { check } = require('express-validator');
 const { createActivity, getActivities, assignActivity,
-    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo, openPages, putInactiveOldActivities, putInactiveOldActivitiesGeneral, assignUserToActivityFirstTimeScript } = require('../controllers/activities');
+    getSpecificActivities, createActivitiesScript, getActivityById, editActivities, deleteActivityById, editActivitiesCategories, getActividadesAusentismo, openPages, putInactiveOldActivities, putInactiveOldActivitiesGeneral, assignUserToActivityFirstTimeScript, reemplazarRonyPorJuanitoCelulaH, limpiarCelulaFDatos } = require('../controllers/activities');
 
 const {
     validateFields, validateJWT
@@ -79,6 +79,9 @@ router.post('/ausentismos', [
     // validateFields
 ], getActividadesAusentismo);
 
+router.post('/reemplazar', [], reemplazarRonyPorJuanitoCelulaH);
+router.post('/limpiar_f', [], limpiarCelulaFDatos);
+
 
 router.post('/script', createActivitiesScript);
 
@@ -90,6 +93,8 @@ router.post('/inactive/old', putInactiveOldActivities);
 
 
 router.post('/inactive/old/general', putInactiveOldActivitiesGeneral);
+
+
 
 
 module.exports = router;

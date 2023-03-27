@@ -25,6 +25,10 @@ const validateJWT = async (req = request, res = response, next) => {
             .populate({
                 path: 'area', select: ['name', 'code'],
                 populate: { path: 'country', select: ['name', 'code', 'img'] }
+            })
+            .populate({
+                path: 'celulas', select: ['celula'],
+                populate: { path: 'celula', select: ['name', 'code'] }
             });
 
         // No existe el usuario con el token asociado.

@@ -330,6 +330,13 @@ const getAllReportsDashboard = async (req = request, res = response) => {
         reports
     });
 
+
+    
+    // TODO: Editar o eliminar luego :)
+    for (const [key, value] of Object.entries(process.memoryUsage())) {
+        console.log(`Memory usage by ${key}, ${Math.round(value / 1024 / 1024 * 100) / 100} Mb`);;
+    }
+
 }
 
 /**

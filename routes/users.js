@@ -11,7 +11,7 @@ const {
 
 // const { isValidRole, emailExist, existeUsuarioPorId } = require('../helpers/db-validators');
 
-const { createUser, getUsers, getUserById, createUsersScript, assignSupervisor, editRoleAndArea } = require('../controllers/users');
+const { createUser, getUsers, getUserById, createUsersScript, assignSupervisor, editRoleAndArea, assignCellsToUser } = require('../controllers/users');
 const { isAdminRole } = require('../middlewares/auth/validate-roles');
 
 const router = Router();
@@ -31,6 +31,8 @@ router.get('/:id', [
 //     check('rol').custom( isValidRole ), 
 //     validateFields
 // ],usuariosPut );
+
+router.post('/assign_celula', assignCellsToUser)
 
 router.post('/',[
     validateJWT,
